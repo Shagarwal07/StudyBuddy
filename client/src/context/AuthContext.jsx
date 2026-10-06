@@ -5,12 +5,20 @@ const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("studybuddy_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [streak, setStreak] = useState(0);
 
   const fetchUserData = useCallback(async () => {
     if (!localStorage.getItem("token")) {
       setUser(null);
+      localStorage.removeItem("studybuddy_user");
       setStreak(0);
       return;
     }
@@ -21,6 +29,7 @@ export default function AuthProvider({ children }) {
       ]);
       if (userRes.status === "fulfilled" && userRes.value.data?.user) {
         setUser(userRes.value.data.user);
+        localStorage.setItem("studybuddy_user", JSON.stringify(userRes.value.data.user));
       }
       if (streakRes.status === "fulfilled") {
         const streakVal =
@@ -43,11 +52,15 @@ export default function AuthProvider({ children }) {
   const login = (jwtToken, userData) => {
     localStorage.setItem("token", jwtToken);
     setToken(jwtToken);
-    if (userData) setUser(userData);
+    if (userData) {
+      localStorage.setItem("studybuddy_user", JSON.stringify(userData));
+      setUser(userData);
+    }
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("studybuddy_user");
     localStorage.removeItem("studybuddy_recent_playlist");
     localStorage.removeItem("studybuddy_recent_player");
     setToken(null);

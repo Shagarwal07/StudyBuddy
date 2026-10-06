@@ -20,7 +20,7 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { username, name, email, badge, leetcodeHandle } = req.body;
+    const { username, name, email, badge, leetcodeHandle, codeforcesHandle } = req.body;
     const targetUsername = (username || name)?.trim();
 
     if (!targetUsername || !email?.trim()) {
@@ -37,6 +37,7 @@ exports.updateProfile = async (req, res) => {
 
     if (badge !== undefined) updateFields.badge = badge.trim();
     if (leetcodeHandle !== undefined) updateFields.leetcodeHandle = leetcodeHandle.trim();
+    if (codeforcesHandle !== undefined) updateFields.codeforcesHandle = codeforcesHandle.trim();
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,

@@ -17,8 +17,9 @@ import {
   Link2,
   ShieldCheck,
   User,
+  Download,
 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import AppShell from "../components/layout/AppShell";
@@ -754,6 +755,49 @@ export default function Practice() {
             </div>
           )}
         </section>
+
+        {/* Clean Extension & Settings Sync Banner Strip (Matching Sub-header layout) */}
+        <div className="h-11 bg-[#121214] border border-neutral-800 rounded-xl px-4 flex items-center justify-between shrink-0 shadow-xs">
+          <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
+            <Code2 className="w-3.5 h-3.5 text-red-400 shrink-0" />
+            <span className="text-xs font-medium text-neutral-200 truncate">
+              Auto-sync coding progress:
+            </span>
+            <Link
+              to="/settings"
+              className="text-xs text-red-400 hover:text-red-300 transition underline underline-offset-2 font-medium shrink-0 flex items-center gap-1"
+            >
+              <span>Set handles in Settings</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+            <span className="text-[10px] text-neutral-500 font-mono hidden md:inline shrink-0">
+              (⚠️ Chrome browser required)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={import.meta.env.VITE_CHROME_EXTENSION_URL || "/studybuddy-extension.zip"}
+              target={import.meta.env.VITE_CHROME_EXTENSION_URL ? "_blank" : undefined}
+              rel={import.meta.env.VITE_CHROME_EXTENSION_URL ? "noreferrer" : undefined}
+              download={import.meta.env.VITE_CHROME_EXTENSION_URL ? undefined : "studybuddy-extension.zip"}
+              onClick={() => {
+                if (!import.meta.env.VITE_CHROME_EXTENSION_URL) {
+                  toast.success("StudyBuddy extension package downloaded! 🚀");
+                }
+              }}
+              className="text-xs text-neutral-200 hover:text-white bg-neutral-800/80 hover:bg-neutral-700/80 px-2.5 py-1 rounded-lg border border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Add StudyBuddy to Chrome"
+            >
+              {import.meta.env.VITE_CHROME_EXTENSION_URL ? (
+                <ExternalLink className="w-3 h-3 text-red-400" />
+              ) : (
+                <Download className="w-3 h-3 text-red-400" />
+              )}
+              <span className="font-medium">Add to Chrome</span>
+            </a>
+          </div>
+        </div>
 
         {/* If user currently has ZERO sheets enrolled */}
         {sheets.length === 0 ? (

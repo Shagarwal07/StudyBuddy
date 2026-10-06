@@ -5,6 +5,7 @@ module.exports = (user) => ({
   email: user.email,
   badge: user.badge || "",
   leetcodeHandle: user.leetcodeHandle || "",
+  codeforcesHandle: user.codeforcesHandle || "",
   role: user.role || "user",
   isRkStudent: Boolean(user.isRkStudent),
   rkStatus: user.rkStatus || "none",
