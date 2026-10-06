@@ -33,8 +33,13 @@ if (process.env.SENTRY_DSN) {
 
 const app = express();
 
-// 1. Security Headers (HSTS, clickjacking, MIME sniffing protection)
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
 
 // 2. Data Sanitization against NoSQL Query Injection (strips $ and . from inputs, Express 5 native)
 app.use((req, res, next) => {
@@ -64,6 +69,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:5000",
+  "https://studybuddy.rk-coachings20.workers.dev",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -75,6 +81,11 @@ app.use(
 
       // Explicitly allowed web client origins
       if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Cloudflare workers & pages domains (*.workers.dev, *.pages.dev)
+      if (/^https:\/\/.*?\.(workers|pages)\.dev$/i.test(origin)) {
+        return callback(null, true);
+      }
 
       // Browser extension origins (Chrome, Edge, Firefox, Brave)
       if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) {
@@ -112,7 +123,7 @@ app.get(["/", "/api", "/api/health"], (req, res) => {
 });
 
 // Modular API routes
-app.use("/api/auth", authRoutes);
+app.use(["/api/auth", "/auth"], authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/playlists", playlistRoutes);
 app.use("/api/settings", settingsRoutes);

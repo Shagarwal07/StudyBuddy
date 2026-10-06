@@ -1340,6 +1340,39 @@ exports.getSheetDetails = async (req, res) => {
   }
 };
 
+function formatLeetCodeCode(code, lang, canonicalMethodName) {
+  if (!code || typeof code !== "string") return code;
+  let res = code.trim().replace(/(?:public\s+)?class\s+Main\b/g, "class Solution");
+
+  // Normalize method name suffixes once for all languages (e.g. majorityElementBruteForce -> majorityElement)
+  if (canonicalMethodName) {
+    res = res.replace(new RegExp(`\\b${canonicalMethodName}(?:BruteForce|Better|Optimal|_brute|_better|_optimal)\\b`, "g"), canonicalMethodName);
+  } else {
+    res = res.replace(/\b([a-zA-Z0-9_]+)(?:BruteForce|Better|Optimal)\b(?=\s*\()/g, "$1");
+  }
+
+  if (lang === "java") {
+    res = res.replace(/\n\s*public\s+static\s+void\s+main\s*\([^)]*\)\s*\{[\s\S]*?\n\s*\}\s*(?=\n\s*\}|\n*$)/g, "");
+    res = res.replace(/\n\s*(?:\/\/[^\n]*\n\s*)*(?:\/\/\s*)?public\s+static\s+void\s+main[\s\S]*?(?=\n\s*\}|\n*$)/g, "");
+    if (!res.includes("class Solution") && !res.includes("class ")) {
+      res = `class Solution {\n    ${res.split("\n").join("\n    ")}\n}`;
+    }
+  } else if (lang === "cpp") {
+    res = res.replace(/\n\s*int\s+main\s*\([^)]*\)\s*\{[\s\S]*?\n\s*\}\s*$/g, "");
+    if (!res.includes("class Solution") && !res.includes("class ")) {
+      res = `class Solution {\npublic:\n    ${res.split("\n").join("\n    ")}\n};`;
+    }
+  } else if (lang === "python") {
+    res = res.replace(/\n\s*if\s+__name__\s*==\s*['"]__main__['"]\s*:[\s\S]*$/g, "");
+    if (!res.includes("class Solution:") && !res.includes("class Solution")) {
+      const indented = res.split("\n").map((l) => (l.trim() ? "    " + l : l)).join("\n");
+      res = `class Solution:\n${indented}`;
+    }
+  }
+
+  return res.trim();
+}
+
 /**
  * GET /api/practice/solution/:problemKey
  */
@@ -1446,29 +1479,71 @@ exports.getProblemSolution = async (req, res) => {
       const codes = typeof lcSol?.code === "object" ? lcSol.code : { java: lcSol?.code || "" };
       const lcRawCode = codes.java || codes.cpp || codes.python || "";
 
+      // Extract canonical LeetCode method name from official solution if available
+      const canonicalMethodName =
+        lcSol?.code?.java?.match(/(?:public|protected|private)?\s+[\w<>\[\]]+\s+(\w+)\s*\(/)?.[1] ||
+        lcSol?.code?.cpp?.match(/[\w<>:]+\s+(\w+)\s*\(/)?.[1] ||
+        null;
+
       const approaches = [];
       if (curatedSol?.approaches?.length) {
         approaches.push(...curatedSol.approaches.filter(
           (app) => !["takeuforward", "tuf"].includes(app.name?.trim().toLowerCase())
         ));
-        if (lcSol?.code?.python) {
-          approaches.forEach((app) => {
-            if (app.codes && !app.codes.python) app.codes.python = lcSol.code.python;
-          });
-        }
-      } else {
+      }
+
+      if (approaches.length === 0) {
         approaches.push({
           name: "Optimal",
-          isLeetCode: false,
+          isLeetCode: true,
           isTuf: false,
           timeComplexity: lcSol?.timeComplexity || "O(N)",
           spaceComplexity: lcSol?.spaceComplexity || "O(1)",
           intuition: lcSol?.explanation || "Optimized solution approach with linear complexity.",
           code: lcRawCode,
-          codes,
+          codes: codes,
           url: lcSol?.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : undefined),
         });
+      } else {
+        // Find Optimal approach to guarantee official LeetCode accepted code
+        let optimalApp = approaches.find((a) => a.name?.toLowerCase().includes("optimal"));
+        if (!optimalApp && approaches.length > 0) {
+          optimalApp = approaches[approaches.length - 1];
+        }
+
+        approaches.forEach((app) => {
+          const isOptimal = app === optimalApp || app.name?.toLowerCase().includes("optimal");
+          let appCodes = typeof app.codes === "object" && app.codes !== null
+            ? { ...app.codes }
+            : typeof app.code === "object" && app.code !== null
+              ? { ...app.code }
+              : { java: typeof app.code === "string" ? app.code : "" };
+
+          if (isOptimal && lcSol?.code && typeof lcSol.code === "object") {
+            // Guarantee 100% official accepted code on Optimal approach
+            if (lcSol.code.java) appCodes.java = lcSol.code.java;
+            if (lcSol.code.cpp) appCodes.cpp = lcSol.code.cpp;
+            if (lcSol.code.python) appCodes.python = lcSol.code.python;
+          } else {
+            // Standardize Brute Force & Better approaches for LeetCode
+            if (appCodes.java) appCodes.java = formatLeetCodeCode(appCodes.java, "java", canonicalMethodName);
+            if (appCodes.cpp) appCodes.cpp = formatLeetCodeCode(appCodes.cpp, "cpp", canonicalMethodName);
+            if (appCodes.python) appCodes.python = formatLeetCodeCode(appCodes.python, "python", canonicalMethodName);
+            if (!appCodes.python && lcSol?.code?.python) appCodes.python = lcSol.code.python;
+          }
+
+          app.codes = appCodes;
+          app.code = appCodes.java || appCodes.cpp || appCodes.python || "";
+          if (lcSol?.url && !app.url) app.url = lcSol.url;
+        });
       }
+
+      const defaultCode =
+        lcSol?.code?.java ||
+        lcSol?.code?.cpp ||
+        approaches[0]?.codes?.java ||
+        approaches[0]?.codes?.cpp ||
+        lcRawCode;
 
       return res.json({
         success: true,
@@ -1480,7 +1555,7 @@ exports.getProblemSolution = async (req, res) => {
         testCases,
         approaches,
         leetcodeSolution: lcSol,
-        defaultCode: lcRawCode,
+        defaultCode,
       });
     }
 
