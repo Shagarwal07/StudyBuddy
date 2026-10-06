@@ -2,234 +2,110 @@
 
 # 🎯 StudyBuddy
 
-### Modern YouTube Playlist & Course Tracking Application
+### The Developer Learning Ecosystem & Practice Workspace
 
-StudyBuddy transforms YouTube playlists and video courses into a structured, distraction-free learning experience. Organize long video series, track completion progress, record timestamp-based notes, maintain learning streaks, and resume exactly where you left off.
+*Transform YouTube playlists into distraction-free, ad-free learning workspaces with timestamped notes, master DSA sheets, and track your study streak.*
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React 19" />
-  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite" alt="Vite" />
-  <img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=for-the-badge&logo=tailwindcss" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Node.js-Express-000000?style=for-the-badge&logo=express" alt="Express" />
-  <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb" alt="MongoDB Atlas" />
-  <img src="https://img.shields.io/badge/Auth-JWT-orange?style=for-the-badge" alt="JWT Auth" />
-</p>
+<br/>
+
+[![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express 5](https://img.shields.io/badge/Express-5.2-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose_9-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Gemini API](https://img.shields.io/badge/Google_Cloud-Gemini_AI-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://ai.google.dev/)
 
 </div>
 
 ---
 
-## ✨ Core Features
+## 🚀 Overview
 
-### 📚 Playlist & Course Management
-- **Import YouTube Playlists**: Paste any public YouTube playlist URL or ID to resolve metadata, duration, thumbnails, and full video lists.
-- **Playlist Library**: View all imported courses, total video counts, completed stats, and quick actions.
-- **Playlist Re-sync**: Fetch new videos added to original YouTube playlists while preserving saved progress and notes.
+**StudyBuddy** eliminates developer context switching. Instead of juggling scattered YouTube tabs, external PDFs, and spreadsheets, StudyBuddy unifies developer education into an ad-free, high-performance command center.
 
-### 🎥 Distraction-free Learning Workspace
-- **Embedded YouTube Player**: Clean learning player with auto-saving video watch progress.
-- **Timestamp Notes**: Capture notes associated with specific video timestamps (e.g. `03:45`) and click any note to seek player playback to that exact moment.
-- **Resume Watching**: Click "Continue Learning" to resume your active course at the exact video and timestamp where you left off.
+### 🌟 3 Must-Have Core Features
+1. **Ad-Free YouTube Course Workspace**: Paste any public playlist or video link to generate structured, ad-free courses with smart auto-resume, video progress tracking, and timestamp-anchored note taking.
+2. **Practice Studio & Curated DSA Roadmaps**: Master Striver's SDE 180, Striver A2Z, NeetCode 150, and Codeforces Rating Ladders with Google Gemini-powered AI study guides, hints, and code explanations.
+3. **Core CS Prephub & Analytics**: Structured syllabus mastery for Operating Systems, DBMS, Networks, and SQL with a GitHub-style daily activity heatmap and streak tracker.
 
-### 📊 Learning Analytics & Streaks
-- **Dashboard Overview**: Monitor total playlists, total videos, completed videos, and streak metrics.
-- **GitHub-style Heatmap**: Visual contribution calendar recording daily learning activity and study duration.
-
-### 🎨 Theme Support & User Experience
-- **Dark / Light Mode**: Seamless theme toggle with persistent user preference.
-- **Responsive Layout**: Designed for desktop and mobile learning environments.
-
----
-# 🖼️ Application Preview
-
-## 🚀 Getting Started
-
-| Landing | Import Playlist |
-|---------|-----------------|
-| ![](assets/screenshots/landing.png) | ![](assets/screenshots/import-playlist.png) |
+### 🔮 Future Roadmap
+* **Companion Browser Extension (Manifest V3)**: Real-time background judge synchronization for LeetCode and Codeforces (currently isolated in `extension/`).
 
 ---
 
-## 🔐 Authentication
+## 🛠️ Tech Stack (Source of Truth: Manifests)
 
-| Register | Login |
-|----------|-------|
-| ![](assets/screenshots/register.png) | ![](assets/screenshots/login.png) |
-
----
-
-## 📊 Dashboard
-
-| Dashboard | Library |
-|-----------|---------|
-| ![](assets/screenshots/dashboard.png) | ![](assets/screenshots/library.png) |
+| Layer | Technologies | Manifest Source |
+| :--- | :--- | :--- |
+| **Frontend** | React 19, Vite 8, Tailwind CSS v4, React Router v7, KaTeX, PrismJS | [`client/package.json`](client/package.json) |
+| **Backend** | Node.js (>=20), Express 5, Mongoose 9, Helmet, CORS, Rate Limiters | [`server/package.json`](server/package.json) |
+| **Database** | MongoDB Atlas (Compound indexed `{ userId, date }`, `{ playlistId, position }`) | [`server/models/`](server/models/) |
+| **AI Engine** | Google Gemini API (`gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.8-flash`) | [`server/config/geminiClient.js`](server/config/geminiClient.js) |
 
 ---
 
-## 🎥 Learning Workspace
-
-| Playlist Details | Learning Player |
-|------------------|-----------------|
-| ![](assets/screenshots/playlist-details.png) | ![](assets/screenshots/player.png) |
-
----
-
-## 📝 Productivity
-
-| Video Notes | Settings |
-|-------------|----------|
-| ![](assets/screenshots/notes.png) | ![](assets/screenshots/settings.png) |
-
----
-# 🏗️ System Architecture
-
-```mermaid
-flowchart TD
-    User([👤 User]) --> FE
-
-    subgraph FE ["🎨 Frontend (React + Vite)"]
-        direction TB
-        F1["Responsive UI"]
-        F2["Authentication"]
-        F3["Dashboard"]
-        F4["Playlist Management"]
-        F5["Learning Workspace"]
-        F6["Settings"]
-    end
-
-    FE <===>|"║ REST API / HTTP ║"| BE
-
-    subgraph BE ["⚙️ Backend (Node.js + Express)"]
-        direction TB
-        B1["JWT Authentication"]
-        B2["Playlist Management"]
-        B3["Progress Tracking"]
-        B4["Video Notes"]
-        B5["YouTube Integration"]
-    end
-
-    BE <---> DB
-    BE <---> YT
-
-    subgraph DB ["🗄️ MongoDB Atlas"]
-        direction TB
-        D1["Users"]
-        D2["Playlists"]
-        D3["Video Progress"]
-        D4["Notes"]
-        D5["Streak & Heatmap"]
-    end
-
-    subgraph YT ["📡 YouTube Data API v3"]
-        direction TB
-        Y1["Playlist Metadata"]
-        Y2["Videos"]
-        Y3["Durations"]
-        Y4["Thumbnails"]
-    end
-
-    %% Custom Styling
-    style User fill:#38bdf8,stroke:#0284c7,color:#fff,stroke-width:2px
-    style FE fill:#1e293b,stroke:#3b82f6,color:#fff,stroke-width:2px
-    style BE fill:#1e293b,stroke:#22c55e,color:#fff,stroke-width:2px
-    style DB fill:#1e293b,stroke:#10b981,color:#fff,stroke-width:2px
-    style YT fill:#1e293b,stroke:#ef4444,color:#fff,stroke-width:2px
-```
----
-
-## ⚡ Tech Stack
-
-- **Frontend**: React 19, Vite, Tailwind CSS v4, React Router DOM v7, Axios, React YouTube, React Hot Toast, Lucide Icons
-- **Backend**: Node.js, Express.js, Mongoose ODM, JWT Authentication, bcryptjs, CORS
-- **Database**: MongoDB Atlas
-- **External API**: YouTube Data API v3
-
----
-
-## 📂 Project Structure
+## 📁 Project Architecture
 
 ```text
-StudyBuddy Application
-├── Client (React 19 + Vite + Tailwind CSS)
-│   ├── Context (Auth & Theme management)
-│   ├── Pages (Home, Auth, Dashboard, Library, PlaylistDetails, PlaylistPlayer, Settings)
-│   └── Components (AppShell, PlayerShell, NotesModal, Heatmap, TopBar, Sidebar)
+StudyBuddy/
+├── client/                     # Frontend SPA (React 19 + Vite 8 + Tailwind v4)
+│   ├── src/
+│   │   ├── components/         # UI Components (TopBar, Sidebar, Modals, Heatmap)
+│   │   ├── context/            # AuthContext & ThemeContext
+│   │   ├── pages/              # Dashboard, Practice, Prephub, YouTubeHub, Settings
+│   │   └── api/                # Axios client with JWT session credentials
+│   └── package.json
 │
-└── Backend Server (Node.js + Express)
-    ├── Models (User, Playlist, Video, Note, DailyActivity)
-    ├── Controllers (Auth, Dashboard, Playlist, Video, Note, Settings, Streak)
-    └── Services (YouTube Data API v3 Integration with caching)
+├── server/                     # Backend API Server (Node.js + Express 5)
+│   ├── config/                 # MongoDB connection & Gemini AI client
+│   ├── controllers/            # Dashboard, Playlist, Practice, Streak, Video controllers
+│   ├── middleware/             # Auth, RateLimiter, Ownership, AI Validation
+│   ├── models/                 # Mongoose 9 models (User, Playlist, Video, DailyActivity)
+│   ├── routes/                 # Express route declarations
+│   ├── services/               # YouTube Data API v3 & Gemini AI services
+│   ├── utils/                  # Functional utilities (playlistStats, updateDailyActivity)
+│   └── server.js               # Application entrypoint & graceful lifecycle
+│
+├── extension/                  # Companion Browser Extension (Future Roadmap - Manifest V3)
+├── .env.example                # Unified environment variable template
+└── README.md
 ```
 
 ---
 
-## 🔑 Environment Variables
+## ⚡ Quick Start
 
-### Backend (`server/.env`)
-```env
-PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?appName=StudyBuddy
-JWT_SECRET=your_jwt_secret_key
-YOUTUBE_API_KEY=your_youtube_data_api_v3_key
-```
+### 1. Prerequisites
+* **Node.js** `>= 20.x`
+* **MongoDB** connection string
+* **YouTube Data API v3 Key** & **Gemini API Key**
 
-### Frontend (`client/.env`)
-```env
-VITE_API_URL=http://localhost:5000/api
-```
-
----
-
-## 🚀 Local Development Setup
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm
-- MongoDB Atlas cluster connection string
-- YouTube Data API v3 key
-
-### 1. Clone the Repository
+### 2. Environment Setup
+Copy `.env.example` in both server and client folders:
 ```bash
-git clone <your-repository-url>
-cd StudyBuddy
+# Server environment
+cp .env.example server/.env
+# Frontend environment
+cp client/.env.example client/.env
 ```
 
-### 2. Configure Environment Files
-- Create `server/.env` with your `MONGO_URI`, `JWT_SECRET`, and `YOUTUBE_API_KEY`.
-- Create `client/.env` with `VITE_API_URL=http://localhost:5000/api`.
+### 3. Run the Development Servers
+Open two terminal sessions:
 
-### 3. Start Backend Server
 ```bash
+# Terminal 1 — Backend API (Runs on http://localhost:5000)
 cd server
 npm install
 npm run dev
-```
 
-### 4. Start Frontend Application
-```bash
+# Terminal 2 — Frontend Client (Runs on http://localhost:5173)
 cd client
 npm install
 npm run dev
 ```
 
-Open your browser at `http://localhost:5173`.
-
 ---
 
-## 🌐 Cloudflare Pages Deployment (Frontend)
-
-1. Connect your GitHub repository to **Cloudflare Pages**.
-2. Set build configuration:
-   - **Framework preset**: `Vite`
-   - **Root directory**: `client`
-   - **Build command**: `npm run build`
-   - **Output directory**: `dist`
-3. Environment variables:
-   - `VITE_API_URL`: `https://your-api-domain.com/api`
-4. Deploy! Cloudflare Pages uses [`client/public/_redirects`](file:///d:/IWS%20PROJECT/StudyBuddy/client/public/_redirects) for SPA routing and [`client/public/_headers`](file:///d:/IWS%20PROJECT/StudyBuddy/client/public/_headers) for production caching.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+## 📜 License
+Distributed under the **MIT License**.
