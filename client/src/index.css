@@ -1,0 +1,320 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-red: #BA3C3C;
+  --color-brand-red-light: #E04D4D;
+  --color-surface: #111113;
+  --color-surface-card: #18181B;
+  --font-brand: 'Outfit', 'Space Grotesk', system-ui, sans-serif;
+}
+
+.font-brand {
+  font-family: 'Outfit', 'Space Grotesk', system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --bg-main: #030005;
+    --text-main: #f5f5f5;
+    --toast-bg: #111113;
+    --toast-color: #ffffff;
+    --toast-border: #262626;
+  }
+
+  html.light {
+    --bg-main: #f8fafc;
+    --text-main: #0f172a;
+    --toast-bg: #ffffff;
+    --toast-color: #0f172a;
+    --toast-border: #e2e8f0;
+    color-scheme: light;
+  }
+
+  html.dark {
+    --bg-main: #030005;
+    --text-main: #f5f5f5;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light Theme Styles */
+  html.light body,
+  html.light .bg-\[\#0E0E12\],
+  html.light .bg-\[\#121214\],
+  html.light .bg-\[\#0E0C15\]\/95,
+  html.light .bg-\[\#030005\] {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
+  html.light .bg-zinc-950,
+  html.light .bg-neutral-950,
+  html.light .bg-\[\#15121F\]\/80,
+  html.light .bg-zinc-950\/40 {
+    background-color: #ffffff !important;
+  }
+
+  html.light .bg-zinc-900,
+  html.light .bg-neutral-900,
+  html.light .bg-zinc-900\/50,
+  html.light .bg-neutral-900\/60 {
+    background-color: #f1f5f9 !important;
+  }
+
+  html.light .text-white,
+  html.light .text-zinc-100,
+  html.light .text-neutral-100,
+  html.light .text-neutral-200 {
+    color: #0f172a !important;
+  }
+
+  html.light .text-zinc-300,
+  html.light .text-neutral-300 {
+    color: #334155 !important;
+  }
+
+  html.light .text-zinc-400,
+  html.light .text-neutral-400,
+  html.light .text-neutral-500 {
+    color: #64748b !important;
+  }
+
+  html.light .border-zinc-800,
+  html.light .border-zinc-800\/80,
+  html.light .border-zinc-800\/60,
+  html.light .border-neutral-800,
+  html.light .border-\[\#252033\]\/90,
+  html.light .border-neutral-900,
+  html.light .border-neutral-950\/60 {
+    border-color: #e2e8f0 !important;
+  }
+
+  html.light aside {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  html.light input,
+  html.light select,
+  html.light textarea {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  html.light .from-\[\#030005\],
+  html.light .to-\[\#030005\] {
+    --tw-gradient-from: #f8fafc var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: #f8fafc var(--tw-gradient-to-position) !important;
+  }
+}
+
+@keyframes nameShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes nameFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-name-glow {
+  background-size: 200% auto;
+  animation: nameFadeSlide 0.7s cubic-bezier(0.16, 1, 0.3, 1), nameShimmer 5s ease infinite;
+}
+
+@keyframes fireBulletRight {
+  0% {
+    left: 3%;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.6);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  100% {
+    left: 97%;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+  }
+}
+
+@keyframes fireBulletLeft {
+  0% {
+    right: 3%;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.6);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  100% {
+    right: 97%;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+  }
+}
+
+@keyframes bugBobLeft {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+@keyframes bugBobRight {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(-2deg); }
+}
+
+@keyframes muzzleFlash {
+  0%, 100% { opacity: 0.2; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+@keyframes clashGlow {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+    box-shadow: 0 0 28px rgba(251, 191, 36, 0.9), 0 0 45px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes recoilLeft {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes recoilRight {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(8px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes textReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes faqCardGlow {
+  0%, 100% {
+    box-shadow: 0 4px 25px rgba(224, 77, 77, 0.12);
+  }
+  50% {
+    box-shadow: 0 8px 35px rgba(224, 77, 77, 0.22);
+  }
+}
+
+@keyframes dividerGlow {
+  0%, 100% {
+    opacity: 0.75;
+    box-shadow: 0 0 10px rgba(224, 77, 77, 0.35);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(224, 77, 77, 0.7), 0 0 35px rgba(239, 68, 68, 0.3);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ambientPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes textWriteReveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    filter: blur(3px);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes codeWriteReveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
