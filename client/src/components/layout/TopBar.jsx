@@ -283,15 +283,17 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                   {/* User Profile Header Card */}
                   <div className="p-2.5 rounded-xl bg-[#171324]/80 border border-[#262035] flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500/20 via-amber-500/20 to-red-500/10 border border-red-500/30 flex items-center justify-center font-bold text-sm text-red-300 shrink-0">
-                      {(user?.name || "U").charAt(0).toUpperCase()}
+                      {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : "U")}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-neutral-100 truncate">
-                        {user?.name || "Student"}
+                        {user?.name || user?.email?.split("@")[0] || "Account"}
                       </p>
-                      <p className="text-[10px] text-neutral-400 truncate font-mono">
-                        {user?.email || "user@studybuddy.app"}
-                      </p>
+                      {user?.email && (
+                        <p className="text-[10px] text-neutral-400 truncate font-mono">
+                          {user.email}
+                        </p>
+                      )}
                       {displayBadge && (
                         <span className="inline-block mt-1 text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
                           {displayBadge}

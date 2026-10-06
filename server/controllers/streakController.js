@@ -1,4 +1,5 @@
 const DailyActivity = require("../models/DailyActivity");
+const UserCodingProgress = require("../models/UserCodingProgress");
 const { getLocalDateString } = require("../utils/dateUtils");
 
 const MS_PER_DAY = 86400000;
@@ -10,13 +11,16 @@ exports.getStreakData = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const activities = await DailyActivity.find({ userId })
-      .sort({ date: 1 })
-      .lean();
+    const [activities, codingProgress] = await Promise.all([
+      DailyActivity.find({ userId }).sort({ date: 1 }).lean(),
+      UserCodingProgress.findOne({ userId }).select("solvedProblemKeys").lean(),
+    ]);
 
     const heatmap = {};
     let totalMinutesStudied = 0;
-    let totalProblemsSolved = 0;
+    let accumulatedDailyProblems = 0;
+
+    const uniqueSolvedCount = codingProgress?.solvedProblemKeys?.length;
 
     // Single-pass accumulation (Replaces 3 redundant loops)
     for (const a of activities) {
@@ -25,15 +29,23 @@ exports.getStreakData = async (req, res) => {
         : a.minutesStudied || 0;
 
       totalMinutesStudied += minutes;
-      totalProblemsSolved += a.codingProblemsSolved || 0;
+      accumulatedDailyProblems += a.codingProblemsSolved || 0;
+
+      const clampedProblems = typeof uniqueSolvedCount === "number"
+        ? Math.min(a.codingProblemsSolved || 0, uniqueSolvedCount)
+        : a.codingProblemsSolved || 0;
 
       heatmap[a.date] = {
         videosCompleted: a.videosCompleted || 0,
         minutesStudied: minutes,
         secondsStudied: a.secondsStudied || 0,
-        codingProblemsSolved: a.codingProblemsSolved || 0,
+        codingProblemsSolved: clampedProblems,
       };
     }
+
+    const totalProblemsSolved = typeof uniqueSolvedCount === "number"
+      ? uniqueSolvedCount
+      : accumulatedDailyProblems;
 
     const isDayActive = (dateStr) => {
       const d = heatmap[dateStr];

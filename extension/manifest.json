@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "name": "StudyBuddy – Coding Sync",
+  "version": "1.1.0",
+  "description": "Real-time synchronization between coding platforms (LeetCode, Codeforces, GeeksforGeeks) and your StudyBuddy streak and problem tracker.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://codeforces.com/*",
+    "https://www.geeksforgeeks.org/*",
+    "http://localhost:5000/*",
+    "http://127.0.0.1:5000/*",
+    "http://localhost:5173/*",
+    "https://studybuddy.rk-coachings20.workers.dev/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "StudyBuddy Sync",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/problems/*",
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/problemset/problem/*",
+        "https://www.geeksforgeeks.org/problems/*",
+        "https://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/billu-solved-3d.png"
+      ],
+      "matches": [
+        "https://leetcode.com/*",
+        "https://codeforces.com/*",
+        "https://www.geeksforgeeks.org/*",
+        "https://*.youtube.com/*"
+      ]
+    }
+  ]
+}
+

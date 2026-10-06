@@ -21,7 +21,7 @@ export default function useSettings() {
     }
   }, []);
 
-  const updateProfile = useCallback(async (name, email, badge, leetcodeHandle) => {
+  const updateProfile = useCallback(async (name, email, badge, leetcodeHandle, codeforcesHandle) => {
     try {
       setSaving(true);
 
@@ -30,6 +30,7 @@ export default function useSettings() {
         email: email,
         badge: badge,
         leetcodeHandle: leetcodeHandle,
+        codeforcesHandle: codeforcesHandle,
       });
 
       setUser(res.data.user);

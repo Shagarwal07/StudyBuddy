@@ -17,5 +17,8 @@ router.post("/custom-sheet", practiceController.createCustomSheet);
 router.post("/custom-sheet/sync", practiceController.syncCustomSheet);
 router.delete("/custom-sheet/:sheetId", practiceController.deleteCustomSheet);
 router.post("/sync-submission", practiceController.syncSubmission);
+router.post("/sync-batch", practiceController.syncBatchSubmissions);
+router.get("/user-status", practiceController.getUserStatus);
+router.post("/reset-progress", practiceController.resetProgress);
 
 module.exports = router;

@@ -274,14 +274,14 @@ const getUserProgress = (userId) =>
   UserCodingProgress.findOneAndUpdate(
     { userId },
     { $setOnInsert: { solvedProblemKeys: [], starredProblemKeys: [], activeSheets: [], customSheets: [] } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   ).lean();
 
 const updateDailyCodingSolved = (userId, count = 1) =>
   DailyActivity.findOneAndUpdate(
     { userId, date: getLocalDateString(new Date()), ...(count < 0 ? { codingProblemsSolved: { $gt: 0 } } : {}) },
     { $inc: { codingProblemsSolved: count } },
-    { upsert: count > 0, new: true }
+    { upsert: count > 0, returnDocument: "after" }
   );
 
 const hasProblemSolution = (normTitle, normSlug, id) =>
@@ -512,6 +512,8 @@ function formatSheetResponse(sheet, solvedSet, starredSet) {
       isSolved:
         solvedSet.has(normTitle) ||
         solvedSet.has(String(p.id)) ||
+        solvedSet.has(normalize(p.id)) ||
+        solvedSet.has("cf" + normalize(p.id)) ||
         solvedSet.has(String(item.leetcodeId)) ||
         (normSlug && solvedSet.has(normSlug)),
       isStarred:
@@ -569,6 +571,8 @@ exports.getSheets = async (req, res) => {
         (p) =>
           solvedSet.has(normalize(p.title)) ||
           solvedSet.has(String(p.id)) ||
+          solvedSet.has(normalize(p.id)) ||
+          solvedSet.has("cf" + normalize(p.id)) ||
           (p.leetcodeId && solvedSet.has(String(p.leetcodeId))) ||
           (p.leetcodeSlug && solvedSet.has(normalize(p.leetcodeSlug)))
       ).length;
@@ -1616,28 +1620,146 @@ exports.toggleProblemStarred = async (req, res) => {
  */
 exports.syncSubmission = async (req, res) => {
   try {
-    const { problemSlug, title } = req.body;
-    if (!problemSlug && !title) {
-      return res.status(400).json({ success: false, message: "problemSlug or title is required" });
+    const key = normalize(req.body.problemSlug || req.body.title);
+    if (!key) return res.status(400).json({ success: false, message: "problemSlug or title is required" });
+
+    await getUserProgress(req.user.id);
+    const updated = await UserCodingProgress.findOneAndUpdate(
+      { userId: req.user.id, solvedProblemKeys: { $ne: key } },
+      { $addToSet: { solvedProblemKeys: key } },
+      { returnDocument: "after" }
+    );
+
+    if (updated) {
+      await updateDailyCodingSolved(req.user.id, 1);
+      return res.json({ success: true, alreadySolved: false, totalSolved: updated.solvedProblemKeys.length });
     }
 
-    const key = normalize(problemSlug || title);
-    const progress = await UserCodingProgress.findOneAndUpdate(
-      { userId: req.user.id },
-      { $addToSet: { solvedProblemKeys: key } },
-      { new: true, upsert: true }
-    );
-    await updateDailyCodingSolved(req.user.id, 1);
+    const current = await getUserProgress(req.user.id);
+    res.json({ success: true, alreadySolved: true, totalSolved: current?.solvedProblemKeys?.length || 0 });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Sync error: " + error.message });
+  }
+};
+
+/**
+ * POST /api/practice/sync-batch
+ * Batch sync problem slugs (for syncing LeetCode solved till date in 1 call)
+ */
+exports.syncBatchSubmissions = async (req, res) => {
+  try {
+    const { problemSlugs } = req.body;
+    if (!Array.isArray(problemSlugs) || problemSlugs.length === 0) {
+      return res.status(400).json({ success: false, message: "problemSlugs array is required" });
+    }
+
+    const keys = Array.from(new Set(problemSlugs.map(normalize).filter(Boolean)));
+    if (keys.length === 0) {
+      return res.status(400).json({ success: false, message: "No valid problem slugs provided" });
+    }
+
+    const currentProgress = await getUserProgress(req.user.id);
+    const existingKeys = new Set(currentProgress?.solvedProblemKeys || []);
+    const newKeys = keys.filter((k) => !existingKeys.has(k));
+
+    let updatedProgress = currentProgress;
+    if (newKeys.length > 0) {
+      updatedProgress = await UserCodingProgress.findOneAndUpdate(
+        { userId: req.user.id },
+        { $addToSet: { solvedProblemKeys: { $each: newKeys } } },
+        { new: true, upsert: true }
+      );
+      await updateDailyCodingSolved(req.user.id, newKeys.length);
+    }
 
     res.json({
       success: true,
-      message: `Problem '${problemSlug || title}' synced successfully as solved!`,
-      alreadySolved: false,
-      totalSolved: progress.solvedProblemKeys.length,
+      message: `Successfully synced ${newKeys.length} new solved problems!`,
+      totalSolved: updatedProgress?.solvedProblemKeys?.length || existingKeys.size,
+      newlySolvedCount: newKeys.length,
+      alreadySolvedCount: keys.length - newKeys.length,
     });
   } catch (error) {
-    console.error("[Practice:syncSubmission]", error.message);
-    res.status(500).json({ success: false, message: "Sync error: " + error.message });
+    console.error("[Practice:syncBatchSubmissions]", error.message);
+    res.status(500).json({ success: false, message: "Batch sync error: " + error.message });
+  }
+};
+
+/**
+ * GET /api/practice/user-status
+ * Live stats and solved keys for browser extension
+ */
+exports.getUserStatus = async (req, res) => {
+  try {
+    const [user, progress] = await Promise.all([
+      User.findById(req.user.id).select("name email avatar streak currentStreak leetcodeHandle codeforcesHandle").lean(),
+      getUserProgress(req.user.id),
+    ]);
+
+    const totalSolved = progress?.solvedProblemKeys?.length || 0;
+
+    const todayActivity = await DailyActivity.findOne({
+      userId: req.user.id,
+      date: getLocalDateString(new Date()),
+    }).lean();
+
+    let todaySolved = todayActivity?.codingProblemsSolved || 0;
+
+    // Self-healing: if today's count was inflated beyond total unique problems ever solved, reconcile it
+    if (todaySolved > totalSolved) {
+      todaySolved = totalSolved;
+      await DailyActivity.updateOne(
+        { userId: req.user.id, date: getLocalDateString(new Date()) },
+        { $set: { codingProblemsSolved: totalSolved } }
+      ).catch(() => {});
+    }
+
+    res.json({
+      success: true,
+      user: {
+        name: user?.name || "User",
+        email: user?.email || "",
+        avatar: user?.avatar || "",
+        streak: user?.currentStreak || user?.streak || 0,
+        leetcodeHandle: user?.leetcodeHandle || "",
+        codeforcesHandle: user?.codeforcesHandle || "",
+      },
+      todaySolved,
+      solvedKeys: progress?.solvedProblemKeys || [],
+      totalSolved,
+    });
+  } catch (error) {
+    console.error("[Practice:getUserStatus]", error.message);
+    res.status(500).json({ success: false, message: "Failed to fetch user status" });
+  }
+};
+
+/**
+ * POST /api/practice/reset-progress
+ * Clears all solved problem keys and resets coding activity
+ */
+exports.resetProgress = async (req, res) => {
+  try {
+    await Promise.all([
+      UserCodingProgress.findOneAndUpdate(
+        { userId: req.user.id },
+        { $set: { solvedProblemKeys: [] } },
+        { new: true, upsert: true }
+      ),
+      DailyActivity.updateOne(
+        { userId: req.user.id, date: getLocalDateString(new Date()) },
+        { $set: { codingProblemsSolved: 0 } }
+      ),
+    ]);
+
+    res.json({
+      success: true,
+      message: "Coding progress reset successfully.",
+      totalSolved: 0,
+    });
+  } catch (error) {
+    console.error("[Practice:resetProgress]", error.message);
+    res.status(500).json({ success: false, message: "Failed to reset progress" });
   }
 };
 

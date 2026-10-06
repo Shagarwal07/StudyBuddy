@@ -35,6 +35,11 @@ const UserSchema = new mongoose.Schema({
     default: "",
     trim: true,
   },
+  codeforcesHandle: {
+    type: String,
+    default: "",
+    trim: true,
+  },
   role: {
     type: String,
     enum: ["user", "admin"],

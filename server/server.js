@@ -134,8 +134,15 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== "production" || require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 StudyBuddy API running on http://localhost:${PORT}`);
+  });
+
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`⚠️ Port ${PORT} is already in use by another running StudyBuddy server process.`);
+      process.exit(1);
+    }
   });
 
   const tryConnect = () => {

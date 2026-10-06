@@ -1,10 +1,11 @@
-import { User, Palette, Info, LogOut, Code2, ExternalLink } from "lucide-react";
+import { User, Palette, Info, LogOut, Code2, ExternalLink, Unlink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useEffect, useState, useCallback } from "react";
 import useSettings from "../hooks/useSettings";
 import Loader from "../components/common/Loader";
+import api from "../api/axios";
 
 import AppShell from "../components/layout/AppShell";
 import SettingsSection from "../components/settings/SettingsSection";
@@ -39,6 +40,7 @@ export default function Settings() {
     email: "",
     badge: "",
     leetcodeHandle: "",
+    codeforcesHandle: "",
   });
 
   const handleProfileChange = useCallback((e) => {
@@ -58,7 +60,8 @@ export default function Settings() {
           targetName,
           targetEmail,
           profile.badge,
-          profile.leetcodeHandle
+          profile.leetcodeHandle,
+          profile.codeforcesHandle
         );
 
         if (success && refreshUser) {
@@ -76,6 +79,58 @@ export default function Settings() {
     [profile, updateProfile, refreshUser],
   );
 
+  const handleDisconnectLeetcode = useCallback(async () => {
+    setProfileSaving(true);
+    try {
+      setProfile((prev) => ({ ...prev, leetcodeHandle: "" }));
+      const [success] = await Promise.all([
+        updateProfile(
+          profile.name.trim(),
+          profile.email.trim(),
+          profile.badge,
+          "",
+          profile.codeforcesHandle
+        ),
+        api.post("/practice/reset-progress").catch((e) => {
+          console.warn("[Settings] Reset progress warning:", e);
+        }),
+      ]);
+      if (success && refreshUser) {
+        await refreshUser();
+      }
+    } catch (error) {
+      console.error(
+        "[Settings] Disconnect LeetCode Failure:",
+        error.message || error,
+      );
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [profile, updateProfile, refreshUser]);
+
+  const handleDisconnectCodeforces = useCallback(async () => {
+    setProfileSaving(true);
+    try {
+      setProfile((prev) => ({ ...prev, codeforcesHandle: "" }));
+      const success = await updateProfile(
+        profile.name.trim(),
+        profile.email.trim(),
+        profile.badge,
+        profile.leetcodeHandle,
+        ""
+      );
+      if (success && refreshUser) {
+        await refreshUser();
+      }
+    } catch (error) {
+      console.error(
+        "[Settings] Disconnect Codeforces Failure:",
+        error.message || error,
+      );
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [profile, updateProfile, refreshUser]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -89,6 +144,7 @@ export default function Settings() {
         email: user.email || "",
         badge: user.badge && user.badge !== "Basic User" ? user.badge : "",
         leetcodeHandle: user.leetcodeHandle || "",
+        codeforcesHandle: user.codeforcesHandle || "",
       });
     }
   }, [user]);
@@ -228,15 +284,27 @@ export default function Settings() {
                           LeetCode Public Username
                         </label>
                         {profile.leetcodeHandle && (
-                          <a
-                            href={`https://leetcode.com/u/${profile.leetcodeHandle}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1"
-                          >
-                            <span>View LeetCode Profile</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          <div className="flex items-center gap-2.5">
+                            <a
+                              href={`https://leetcode.com/u/${profile.leetcodeHandle}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1"
+                            >
+                              <span>View Profile</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={handleDisconnectLeetcode}
+                              disabled={profileSaving}
+                              className="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/20 disabled:opacity-50"
+                              title="Disconnect LeetCode handle"
+                            >
+                              <Unlink className="w-3 h-3" />
+                              <span>Disconnect</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                       <input
@@ -246,6 +314,47 @@ export default function Settings() {
                         onChange={handleProfileChange}
                         placeholder="e.g. your_leetcode_username"
                         className="w-full bg-[#0E0E12] border border-neutral-800 rounded-xl px-3.5 py-2 text-sm text-neutral-100 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 transition-all font-mono"
+                      />
+                    </div>
+
+                    {/* Codeforces Handle Input */}
+                    <div className="space-y-1.5 pt-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-neutral-400 flex items-center gap-1.5">
+                          <Code2 className="w-3.5 h-3.5 text-blue-400" />
+                          Codeforces Public Username
+                        </label>
+                        {profile.codeforcesHandle && (
+                          <div className="flex items-center gap-2.5">
+                            <a
+                              href={`https://codeforces.com/profile/${profile.codeforcesHandle}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-blue-400 hover:text-blue-300 transition flex items-center gap-1"
+                            >
+                              <span>View Profile</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={handleDisconnectCodeforces}
+                              disabled={profileSaving}
+                              className="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/20 disabled:opacity-50"
+                              title="Disconnect Codeforces handle"
+                            >
+                              <Unlink className="w-3 h-3" />
+                              <span>Disconnect</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        name="codeforcesHandle"
+                        value={profile.codeforcesHandle}
+                        onChange={handleProfileChange}
+                        placeholder="e.g. tourist"
+                        className="w-full bg-[#0E0E12] border border-neutral-800 rounded-xl px-3.5 py-2 text-sm text-neutral-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all font-mono"
                       />
                     </div>
                   </div>

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StudyBuddy Sync</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 350px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #09080e;
+      color: #f1f5f9;
+      padding: 16px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 12px;
+    }
+    .logo-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #1c152a, #0b0914);
+      border: 1px solid rgba(224, 77, 77, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      box-shadow: 0 0 10px rgba(224, 77, 77, 0.25);
+    }
+    .icon-s { color: #ffffff; }
+    .icon-b { color: #ff4d4d; }
+    .logo-text {
+      display: flex;
+      align-items: baseline;
+      gap: 1px;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+    }
+    .txt-study {
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .txt-buddy {
+      font-weight: 900;
+      background: linear-gradient(135deg, #FF4D4D 0%, #FF6E6E 50%, #FFA270 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 8px rgba(255, 77, 77, 0.35));
+    }
+    .txt-dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ef4444;
+      margin-left: 2px;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.9);
+      align-self: center;
+    }
+    .txt-sync {
+      font-size: 9px;
+      font-weight: 700;
+      font-family: monospace;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-left: 6px;
+      letter-spacing: 0.8px;
+    }
+    .status-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-pill.disconnected {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Live Profile Card */
+    .profile-card {
+      background: linear-gradient(180deg, rgba(23, 19, 36, 0.8) 0%, rgba(15, 12, 24, 0.9) 100%);
+      border: 1px solid rgba(224, 77, 77, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .profile-card.active {
+      display: block;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+    .user-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .user-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-email {
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: monospace;
+    }
+    .btn-disconnect {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-disconnect:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fff;
+    }
+
+    /* Platform Style Vector Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .stat-item {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 9px;
+      padding: 7px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .stat-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-bottom: 2px;
+    }
+    .stat-icon {
+      width: 14px;
+      height: 14px;
+      shrink: 0;
+    }
+    .stat-icon.flame {
+      color: #f97316;
+      filter: drop-shadow(0 0 5px rgba(249, 115, 22, 0.6));
+    }
+    .stat-icon.target {
+      color: #10b981;
+      filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.5));
+    }
+    .stat-icon.code {
+      color: #ef4444;
+      filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5));
+    }
+    .stat-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 9px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+    }
+
+    /* Primary Action Buttons */
+    .actions-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button.btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #BA3C3C, #E04D4D);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 14px rgba(224, 77, 77, 0.3);
+    }
+    button.btn-primary:hover { opacity: 0.95; }
+    button.btn-primary:active { transform: scale(0.99); }
+    
+    button.btn-sync-all {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    }
+    button.btn-sync-all:hover { opacity: 0.95; }
+    button.btn-sync-all:active { transform: scale(0.99); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Platform Toggle (Option B) */
+    .platform-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 3px;
+      border-radius: 8px;
+      gap: 4px;
+    }
+    .plat-btn {
+      flex: 1;
+      padding: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .plat-btn:hover {
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .plat-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .plat-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .plat-dot.lc { background: #FFA116; box-shadow: 0 0 5px rgba(255, 161, 22, 0.6); }
+    .plat-dot.cf { background: #318CE7; box-shadow: 0 0 5px rgba(49, 140, 231, 0.6); }
+
+    .cf-handle-box {
+      display: none;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .cf-handle-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(49, 140, 231, 0.35);
+      border-radius: 7px;
+      padding: 7px 10px;
+      color: #fff;
+      font-size: 11px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .cf-handle-input:focus {
+      border-color: #318CE7;
+      box-shadow: 0 0 8px rgba(49, 140, 231, 0.3);
+    }
+
+    .btn-svg {
+      width: 14px;
+      height: 14px;
+      shrink: 0;
+    }
+
+    /* Collapsible Settings Toggle */
+    .settings-toggle-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .settings-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+    }
+    .settings-btn-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Collapsible Settings Drawer */
+    .settings-drawer {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+    }
+    .settings-drawer.open {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .env-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px;
+      border-radius: 6px;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .env-btn {
+      flex: 1;
+      padding: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #94a3b8;
+      transition: all 0.2s;
+    }
+    .env-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+    .form-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    label {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .secure-badge {
+      font-size: 9px;
+      font-family: monospace;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 7px;
+      padding: 7px 9px;
+      color: #fff;
+      font-size: 11px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #E04D4D;
+    }
+
+    /* Write-Only Token Styling (Cannot be selected or copied) */
+    .write-only-input {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -ms-user-select: none !important;
+      font-family: monospace;
+      letter-spacing: 2px;
+    }
+    .write-only-input::selection {
+      background: transparent;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    button.btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 7px;
+      padding: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.2s, color 0.2s;
+    }
+    button.btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    /* Toast Notification */
+    .msg {
+      margin-top: 10px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 11px;
+      line-height: 1.4;
+      text-align: center;
+      display: none;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .msg.success {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #34d399;
+      display: block;
+    }
+    .msg.error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+      display: block;
+    }
+
+    .footer {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 9px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* YouTube Quick Import Card */
+    .yt-detected-box {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .yt-detected-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #f87171;
+      margin-bottom: 8px;
+    }
+    .yt-detected-header svg {
+      width: 14px;
+      height: 14px;
+      fill: #ef4444;
+      flex-shrink: 0;
+    }
+    .yt-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      color: #e2e8f0;
+      font-size: 11px;
+    }
+    .btn-yt-sync {
+      width: 100%;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #BA3C3C, #E04D4D);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-yt-sync:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Brand Header -->
+  <div class="header">
+    <div class="logo-box">
+      <div class="logo-icon">
+        <span class="icon-s">S</span><span class="icon-b">B</span>
+      </div>
+      <div class="logo-text">
+        <span class="txt-study">Study</span><span class="txt-buddy">Buddy</span><span class="txt-dot"></span>
+        <span class="txt-sync">SYNC</span>
+      </div>
+    </div>
+    <div id="statusPill" class="status-pill disconnected">
+      <div class="dot"></div>
+      <span id="statusPillText">Not Linked</span>
+    </div>
+  </div>
+
+  <!-- Live Stats Dashboard Card -->
+  <div id="profileCard" class="profile-card">
+    <div class="profile-header">
+      <div id="userAvatar" class="avatar">U</div>
+      <div class="user-info">
+        <div id="userName" class="user-name">StudyBuddy User</div>
+        <div id="userEmail" class="user-email">Session Active</div>
+      </div>
+      <button type="button" id="disconnectBtn" class="btn-disconnect" title="Disconnect Account">
+        Disconnect
+      </button>
+    </div>
+
+    <!-- Transparent Vector Icons Stats (Platform Matching) -->
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-top">
+          <svg class="stat-icon flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+          </svg>
+          <div id="statStreak" class="stat-val">0</div>
+        </div>
+        <div class="stat-lbl">Day Streak</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-top">
+          <svg class="stat-icon target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+          </svg>
+          <div id="statToday" class="stat-val">0</div>
+        </div>
+        <div class="stat-lbl">Today Solved</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-top">
+          <svg class="stat-icon code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 16 4-4-4-4"></path>
+            <path d="m6 8-4 4 4 4"></path>
+            <path d="m14.5 4-5 16"></path>
+          </svg>
+          <div id="statTotal" class="stat-val">0</div>
+        </div>
+        <div class="stat-lbl">Total Solved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Action Buttons Stack (Option B) -->
+  <div class="actions-stack">
+    <!-- YouTube Quick Import Card (Auto-detected if current tab is YouTube) -->
+    <div id="ytDetectedBox" class="yt-detected-box" style="display: none;">
+      <div class="yt-detected-header">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        <span id="ytDetectedTitle" class="yt-title">YouTube Course Detected</span>
+      </div>
+      <button id="ytSyncBtn" class="btn-yt-sync" type="button">
+        <span>⚡ 1-Click Add Course to StudyBuddy</span>
+      </button>
+    </div>
+
+    <!-- Platform Segment Selector -->
+    <div class="platform-toggle">
+      <button type="button" id="platLcBtn" class="plat-btn active" data-platform="leetcode">
+        <span class="plat-dot lc"></span>
+        <span>LeetCode</span>
+      </button>
+      <button type="button" id="platCfBtn" class="plat-btn" data-platform="codeforces">
+        <span class="plat-dot cf"></span>
+        <span>Codeforces</span>
+      </button>
+    </div>
+
+    <!-- Codeforces Username Input Box (visible when Codeforces tab is selected) -->
+    <div id="cfHandleBox" class="cf-handle-box">
+      <input type="text" id="cfHandleInput" class="cf-handle-input" placeholder="Codeforces username (e.g. tourist)" spellcheck="false" autocomplete="off" />
+    </div>
+
+    <!-- Unified Sync Solved History Button -->
+    <button id="syncAllBtn" class="btn-sync-all">
+      <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+        <path d="M21 3v5h-5"></path>
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+        <path d="M3 21v-5h5"></path>
+      </svg>
+      <span id="syncBtnText">Sync Solved History (LeetCode)</span>
+    </button>
+    <button id="autoDetectBtn" class="btn-primary">
+      <svg class="btn-svg" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+      </svg>
+      <span>Auto-Detect Token from Open Tab</span>
+    </button>
+  </div>
+
+  <!-- Collapsible Settings Toggle -->
+  <button type="button" id="toggleSettingsBtn" class="settings-toggle-btn">
+    <div class="settings-btn-left">
+      <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      <span>Connection &amp; Token Settings</span>
+    </div>
+    <span id="toggleArrow">▼</span>
+  </button>
+
+  <!-- Collapsible Drawer -->
+  <div id="settingsDrawer" class="settings-drawer">
+    <!-- Environment Selector -->
+    <div class="env-toggle">
+      <button type="button" id="envLocalBtn" class="env-btn active">Local Dev</button>
+      <button type="button" id="envProdBtn" class="env-btn">Live / Cloudflare</button>
+    </div>
+
+    <!-- Backend API URL -->
+    <div class="form-group">
+      <label>Backend API Endpoint</label>
+      <input type="text" id="apiUrl" value="http://localhost:5000/api" placeholder="https://studybuddy.rk-coachings20.workers.dev/api">
+    </div>
+
+    <!-- Write-Only Masked JWT Token -->
+    <div class="form-group">
+      <div class="form-label-row">
+        <label>Authentication Token (JWT)</label>
+        <span class="secure-badge">🔒 Write-Only</span>
+      </div>
+      <input 
+        type="password" 
+        id="authToken" 
+        class="write-only-input"
+        placeholder="Paste token here to update"
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </div>
+
+    <div class="btn-row">
+      <button id="saveBtn" class="btn-secondary">
+        <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span>Save Config</span>
+      </button>
+      <button id="testBtn" class="btn-secondary">
+        <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>Test Ping</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="statusMsg" class="msg"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Real-time synchronization for LeetCode, Codeforces &amp; GeeksforGeeks.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
