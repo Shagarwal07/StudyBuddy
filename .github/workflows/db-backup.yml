@@ -1,0 +1,47 @@
+name: Automated MongoDB Backup to GCP Cloud Storage
+
+on:
+  schedule:
+    # Runs daily at 03:00 UTC (8:30 AM IST)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allows manual 1-click trigger from GitHub Actions tab
+
+jobs:
+  backup:
+    name: Backup MongoDB Atlas to GCP Cloud Storage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate Timestamped Backup Filename
+        id: vars
+        run: echo "FILENAME=studybuddy-backup-$(date +'%Y-%m-%d_%H%M%S').gz" >> $GITHUB_ENV
+
+      - name: Install MongoDB Database Tools (mongodump)
+        run: |
+          sudo apt-get update -qq
+          wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.9.4.deb
+          sudo dpkg -i mongodb-database-tools-*.deb
+          rm mongodb-database-tools-*.deb
+
+      - name: Export & Compress MongoDB Atlas Database
+        run: |
+          mongodump --uri="${{ secrets.MONGO_URI }}" --archive="${{ env.FILENAME }}" --gzip
+          ls -lh ${{ env.FILENAME }}
+
+      - name: Authenticate to Google Cloud (learnstudio-503107)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: 'learnstudio-503107'
+
+      - name: Upload to GCP Cloud Storage (us-central1 Free Tier)
+        run: |
+          BUCKET_NAME="studybuddy-backups-learnstudio-503107"
+          # Upload directly to the bucket's daily/ folder
+          echo "Uploading ${{ env.FILENAME }} to gs://${BUCKET_NAME}/daily/..."
+          gsutil cp "${{ env.FILENAME }}" "gs://${BUCKET_NAME}/daily/"
+          echo "✓ Backup successfully archived to GCP Cloud Storage!"
