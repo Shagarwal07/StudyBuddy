@@ -17,16 +17,31 @@ import toast from "react-hot-toast";
 import api from "../../api/axios";
 
 const DEFAULT_TEMPLATES = {
-  java: (title) => `// Problem: ${title || "Solution"}
+  java: (title, isCp = false) =>
+    isCp
+      ? `// Problem: ${title || "Solution"}
 // Write your code below and click "Run (Ctrl+↵)"
+
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
         // Write your solution here
         
     }
+}`
+      : `// Problem: ${title || "Solution"}
+// LeetCode Solution Template
+
+class Solution {
+    // Write your solution method below:
+    
 }`,
-  cpp: (title) => `// Problem: ${title || "Solution"}
+
+  cpp: (title, isCp = false) =>
+    isCp
+      ? `// Problem: ${title || "Solution"}
 // Write your code below and click "Run (Ctrl+↵)"
 
 #include <iostream>
@@ -38,29 +53,60 @@ int main() {
     // Write your solution here
     
     return 0;
-}`,
-  python: (title) => `# Problem: ${title || "Solution"}
+}`
+      : `// Problem: ${title || "Solution"}
+// LeetCode Solution Template
+
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <unordered_map>
+
+using namespace std;
+
+class Solution {
+public:
+    // Write your solution method below:
+    
+};`,
+
+  python: (title, isCp = false) =>
+    isCp
+      ? `# Problem: ${title || "Solution"}
 # Write your code below and click "Run (Ctrl+↵)"
+
+import sys
 
 def solve():
     # Write your solution here
     pass
 
 if __name__ == "__main__":
-    solve()`,
+    solve()`
+      : `# Problem: ${title || "Solution"}
+# LeetCode Solution Template
+
+from typing import List, Optional
+
+class Solution:
+    # Write your solution method below:
+    pass`,
+
   javascript: (title) => `// Problem: ${title || "Solution"}
-// Write your code below and click "Run (Ctrl+↵)"
+// LeetCode Solution
 
-function solve() {
+/**
+ * @return {*}
+ */
+var solution = function() {
     // Write your solution here
-}
-
-solve();`,
+};`,
 };
 
-const getStarterTemplate = (lang, title = "") => {
+const getStarterTemplate = (lang, title = "", platformName = "LeetCode") => {
+  const isCp = String(platformName || "").toLowerCase().includes("codeforces");
   const fn = DEFAULT_TEMPLATES[lang] || DEFAULT_TEMPLATES.java;
-  return typeof fn === "function" ? fn(title) : fn;
+  return typeof fn === "function" ? fn(title, isCp) : fn;
 };
 
 const getApproachCode = (app, lang) => {
@@ -353,12 +399,37 @@ export default function StufuModal({
     setShowSolution(initialShowSolution);
   }, [initialShowSolution]);
 
+  const currentPlatformName = useMemo(() => {
+    const rawUrl = (
+      problem?.platformUrl ||
+      problem?.leetcodeUrl ||
+      problem?.url ||
+      problem?.questionUrl ||
+      ""
+    ).toLowerCase();
+    const p = (problem?.platform || solutionData?.platform || "").toLowerCase();
+
+    if (rawUrl.includes("codeforces.com") || p.includes("codeforces")) return "Codeforces";
+    if (rawUrl.includes("geeksforgeeks.org") || p.includes("geeksforgeeks") || p === "gfg") return "GeeksforGeeks";
+    if (rawUrl.includes("codechef.com") || p.includes("codechef")) return "CodeChef";
+    if (rawUrl.includes("hackerrank.com") || p.includes("hackerrank")) return "HackerRank";
+    if (rawUrl.includes("atcoder.jp") || p.includes("atcoder")) return "AtCoder";
+    if (rawUrl.includes("takeuforward.org") || p.includes("takeuforward") || p === "tuf") return "takeUforward";
+    if (rawUrl.includes("leetcode.com") || p.includes("leetcode")) return "LeetCode";
+
+    if (problem?.platform && !["problem link", "official platform"].includes(problem.platform.toLowerCase())) {
+      return problem.platform;
+    }
+    if (solutionData?.platform) return solutionData.platform;
+    return "LeetCode";
+  }, [problem, solutionData]);
+
   const problemKey = problem?.id || problem?.title || problem?.key || "";
 
   // Initialize editor code with clean starter template when modal opens with a problem
   useEffect(() => {
     if (isOpen && problem) {
-      setCode(getStarterTemplate(language, problem.title));
+      setCode(getStarterTemplate(language, problem.title, currentPlatformName));
       setRunResult(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -461,7 +532,7 @@ export default function StufuModal({
         return;
       }
     }
-    setCode(getStarterTemplate(newLang, problem?.title));
+    setCode(getStarterTemplate(newLang, problem?.title, currentPlatformName));
   };
 
   // Draggable divider handlers
@@ -559,31 +630,6 @@ export default function StufuModal({
     }
   };
 
-  const currentPlatformName = useMemo(() => {
-    const rawUrl = (
-      problem?.platformUrl ||
-      problem?.leetcodeUrl ||
-      problem?.url ||
-      problem?.questionUrl ||
-      ""
-    ).toLowerCase();
-    const p = (problem?.platform || solutionData?.platform || "").toLowerCase();
-
-    if (rawUrl.includes("codeforces.com") || p.includes("codeforces")) return "Codeforces";
-    if (rawUrl.includes("geeksforgeeks.org") || p.includes("geeksforgeeks") || p === "gfg") return "GeeksforGeeks";
-    if (rawUrl.includes("codechef.com") || p.includes("codechef")) return "CodeChef";
-    if (rawUrl.includes("hackerrank.com") || p.includes("hackerrank")) return "HackerRank";
-    if (rawUrl.includes("atcoder.jp") || p.includes("atcoder")) return "AtCoder";
-    if (rawUrl.includes("takeuforward.org") || p.includes("takeuforward") || p === "tuf") return "takeUforward";
-    if (rawUrl.includes("leetcode.com") || p.includes("leetcode")) return "LeetCode";
-
-    if (problem?.platform && !["problem link", "official platform"].includes(problem.platform.toLowerCase())) {
-      return problem.platform;
-    }
-    if (solutionData?.platform) return solutionData.platform;
-    return "LeetCode";
-  }, [problem, solutionData]);
-
   // Copy code to clipboard and open problem on official judge / platform
   const handleForwardToPlatform = async () => {
     if (!code.trim()) {
@@ -611,9 +657,15 @@ export default function StufuModal({
       return;
     }
 
-    // 1. Copy code to clipboard
+    // 1. Copy code to clipboard (ensure class Solution for LeetCode)
     try {
-      await navigator.clipboard.writeText(code);
+      let codeToCopy = code;
+      if (currentPlatformName === "LeetCode") {
+        codeToCopy = codeToCopy
+          .replace(/public\s+class\s+Main\b/g, "class Solution")
+          .replace(/class\s+Main\b/g, "class Solution");
+      }
+      await navigator.clipboard.writeText(codeToCopy);
       toast.success(`📋 Solution copied! Opening ${currentPlatformName}...`);
     } catch {
       toast.error("Failed to copy code to clipboard.");
@@ -1180,7 +1232,7 @@ export default function StufuModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCode(getStarterTemplate(language, problem?.title))}
+                  onClick={() => setCode(getStarterTemplate(language, problem?.title, currentPlatformName))}
                   className="text-xs text-neutral-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
                   title="Reset to starter template"
                 >
