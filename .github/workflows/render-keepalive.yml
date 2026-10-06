@@ -1,0 +1,27 @@
+name: Render Keep-Alive Cron
+
+on:
+  schedule:
+    # Runs every 14 minutes to prevent Render free-tier from spinning down
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows 1-click test ping from GitHub Actions tab
+
+jobs:
+  ping:
+    name: Ping Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Ping
+        run: |
+          URL="${{ secrets.RENDER_API_URL }}"
+          if [ -z "$URL" ]; then
+            echo "::warning ::RENDER_API_URL secret is not set in GitHub repository secrets."
+            exit 0
+          fi
+          CLEAN_URL="${URL%/}"
+          echo "Pinging ${CLEAN_URL}/api/health..."
+          curl -s -f -m 30 "${CLEAN_URL}/api/health" || curl -s -f -m 30 "${CLEAN_URL}/" || {
+            echo "Ping failed or server waking up."
+            exit 0
+          }
+          echo "✓ Render keep-alive ping successful!"

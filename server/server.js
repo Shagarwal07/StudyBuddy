@@ -145,6 +145,12 @@ if (process.env.NODE_ENV !== "production" || require.main === module) {
     }
   });
 
+  // Keep-alive self-ping for Render free tier (Render spins down after 15m)
+  const extUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL;
+  if (extUrl) {
+    setInterval(() => fetch(`${extUrl.replace(/\/+$/, "")}/api/health`).catch(() => {}), 14 * 60 * 1000);
+  }
+
   const tryConnect = () => {
     connectDB()
       .then(() => {
