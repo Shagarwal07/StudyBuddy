@@ -1,0 +1,1057 @@
+/* ==========================================================================
+   THEME: "WEB" (Agency-Grade Spider-Web Geometric Presentation Layer)
+   Scoped strictly under `html[data-skin="web"]` — zero disruption to default theme.
+   ========================================================================== */
+
+:root {
+  /* Default stealth palette */
+  --bg-ink: #000000;
+  --surface-raised: #0f0f13;
+  --surface-elevated: #18181d;
+  --bone: #ffffff;
+  --bone-muted: #a1a1aa;
+  --bone-stroke: rgba(255, 255, 255, 0.12);
+  --crimson: #d63a3a;
+  --crimson-hover: #e5484d;
+  --crimson-deep: #451216;
+  --cutout-stroke: rgba(255, 255, 255, 0.12);
+  --cutout-hover-stroke: linear-gradient(135deg, rgba(229, 72, 77, 0.6) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(229, 72, 77, 0.6) 100%);
+  --cutout-inner-bg: linear-gradient(135deg, #111115 0%, #08080a 100%);
+  --cutout-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --web-strand-color: #ffffff;
+  --strand-line: rgba(255, 255, 255, 0.12);
+  --strand-dot: rgba(255, 255, 255, 0.50);
+}
+
+/* Scoped strictly to Web Skin in Dark mode */
+html.dark[data-skin="web"],
+html[data-theme="dark"][data-skin="web"] {
+  --bg-main: #000000;
+  --text-main: #ffffff;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+  --surface: #070709;
+  --surface-card: #0f0f13;
+  --surface-hover: #18181d;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --bone: #ffffff;
+  --bone-muted: #a1a1aa;
+  --bone-stroke: rgba(255, 255, 255, 0.12);
+  --crimson: #d63a3a;
+  --crimson-hover: #e5484d;
+  --crimson-deep: #451216;
+  --on-crimson-deep: #ffffff;
+  --on-accent: #ffffff;
+  --cutout-stroke: rgba(255, 255, 255, 0.12);
+  --cutout-hover-stroke: linear-gradient(135deg, rgba(229, 72, 77, 0.6) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(229, 72, 77, 0.6) 100%);
+  --cutout-inner-bg: linear-gradient(135deg, #111115 0%, #08080a 100%);
+  --cutout-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --web-strand-color: #ffffff;
+  --strand-line: rgba(255, 255, 255, 0.12);
+  --strand-dot: rgba(255, 255, 255, 0.50);
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --drop-shadow-card: none;
+  --drop-shadow-card-hover: none;
+  --header-bg: rgba(0, 0, 0, 0.88);
+  --header-border: rgba(255, 255, 255, 0.09);
+  --heat-empty: #111115;
+  --heat-border-0: rgba(255, 255, 255, 0.06);
+  --heat-1: #4a151b;
+  --heat-border-1: rgba(229, 72, 77, 0.25);
+  --heat-2: #7a1f27;
+  --heat-border-2: rgba(229, 72, 77, 0.35);
+  --heat-3: #b32b34;
+  --heat-border-3: rgba(229, 72, 77, 0.50);
+  --heat-4: #e5484d;
+  --heat-border-4: rgba(229, 72, 77, 0.70);
+  --progress-track: #141418;
+  --progress-fill: #e5484d;
+  --input-bg: #0b0b0e;
+  --input-border: rgba(255, 255, 255, 0.12);
+  --input-focus-border: #e5484d;
+  --input-focus-ring: rgba(229, 72, 77, 0.25);
+  --scrollbar-track: #000000;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(229, 72, 77, 0.6);
+  --glow-crimson: rgba(229, 72, 77, 0.35);
+  --glow-accent: rgba(229, 72, 77, 0.2);
+  --table-row-hover: #141418;
+  --table-row-stripe: rgba(16, 16, 20, 0.6);
+  --table-border: rgba(255, 255, 255, 0.09);
+  --editor-bg: #09090b;
+  --editor-header: #0f0f13;
+  --editor-gutter: #09090b;
+  --editor-gutter-text: #52525b;
+  --editor-border: rgba(255, 255, 255, 0.08);
+  --modal-bg: #0d0d10;
+  --modal-border: rgba(255, 255, 255, 0.14);
+  --dropdown-bg: #0d0d10;
+  --dropdown-border: rgba(255, 255, 255, 0.14);
+  --toast-bg: #0d0d10;
+  --toast-color: #ffffff;
+  --toast-border: rgba(255, 255, 255, 0.14);
+  --selection-bg: #52151b;
+  --selection-text: #ffffff;
+  --web-bg-strand: #ffffff;
+  --web-bg-strand-opacity: 0.24;
+  --web-bg-strand-opacity-outer: 0.10;
+  --web-bg-strand-glow: rgba(255, 255, 255, 0.04);
+  --strand-dot: rgba(255, 255, 255, 0.50);
+  --web-pulse-a: #e5484d;
+  --web-pulse-b: #ffffff;
+  --web-dew: #ffffff;
+  --web-ripple: #e5484d;
+  --grid-bg: transparent;
+  --grid-line: rgba(56, 189, 248, 0.08);
+  --grid-pulse-a: #00f0ff;
+  --grid-pulse-b: #f472b6;
+  --grid-node-glow: rgba(56, 189, 248, 0.4);
+  --grid-pulse-opacity: 0.85;
+  color-scheme: dark;
+}
+
+html.dark[data-skin="web"] body,
+html[data-theme="dark"][data-skin="web"] body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Scoped strictly to Web Skin in Light mode */
+html.light[data-skin="web"],
+html[data-theme="light"][data-skin="web"] {
+  --bg-main: #fdfbf7;
+  --text-main: #09090b;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  --surface: #ffffff;
+  --surface-card: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(186, 60, 60, 0.35);
+  --bone: #09090b;
+  --bone-muted: #475569;
+  --bone-stroke: rgba(15, 23, 42, 0.12);
+  --crimson: #ba3c3c;
+  --crimson-hover: #a32e2e;
+  --crimson-deep: #fce8e8;
+  --on-crimson-deep: #9f1239;
+  --on-accent: #ffffff;
+  --cutout-stroke: rgba(15, 23, 42, 0.12);
+  --cutout-hover-stroke: linear-gradient(135deg, rgba(186, 60, 60, 0.6) 0%, rgba(15, 23, 42, 0.20) 50%, rgba(186, 60, 60, 0.6) 100%);
+  --cutout-inner-bg: #ffffff;
+  --cutout-inner-shadow: none;
+  --web-strand-color: #94a3b8;
+  --strand-line: rgba(148, 163, 184, 0.22);
+  --strand-dot: rgba(186, 60, 60, 0.45);
+  --shadow-card: 0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+  --shadow-card-hover: 0 8px 24px -4px rgba(15, 23, 42, 0.10), 0 3px 6px -1px rgba(15, 23, 42, 0.05);
+  --drop-shadow-card: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.05));
+  --drop-shadow-card-hover: drop-shadow(0 8px 20px rgba(15, 23, 42, 0.10));
+  --header-bg: rgba(253, 251, 247, 0.92);
+  --header-border: rgba(15, 23, 42, 0.08);
+  --heat-empty: #f1f5f9;
+  --heat-border-0: rgba(186, 60, 60, 0.12);
+  --heat-1: #f8b4b4;
+  --heat-border-1: rgba(186, 60, 60, 0.25);
+  --heat-2: #e96d6d;
+  --heat-border-2: rgba(186, 60, 60, 0.35);
+  --heat-3: #ba3c3c;
+  --heat-border-3: rgba(186, 60, 60, 0.50);
+  --heat-4: #821e1e;
+  --heat-border-4: rgba(130, 30, 30, 0.65);
+  --progress-track: #f1f5f9;
+  --progress-fill: #ba3c3c;
+  --input-bg: #ffffff;
+  --input-border: rgba(15, 23, 42, 0.18);
+  --input-focus-border: #ba3c3c;
+  --input-focus-ring: rgba(186, 60, 60, 0.20);
+  --scrollbar-track: #fdfbf7;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.18);
+  --scrollbar-thumb-hover: rgba(186, 60, 60, 0.5);
+  --glow-crimson: rgba(186, 60, 60, 0.2);
+  --glow-accent: rgba(186, 60, 60, 0.12);
+  --table-row-hover: #f8fafc;
+  --table-row-stripe: #f1f5f9;
+  --table-border: rgba(15, 23, 42, 0.07);
+  --editor-bg: #ffffff;
+  --editor-header: #f8fafc;
+  --editor-gutter: #fdfbf7;
+  --editor-gutter-text: #64748b;
+  --editor-border: rgba(15, 23, 42, 0.10);
+  --modal-bg: #ffffff;
+  --modal-border: rgba(15, 23, 42, 0.12);
+  --dropdown-bg: #ffffff;
+  --dropdown-border: rgba(15, 23, 42, 0.12);
+  --toast-bg: #ffffff;
+  --toast-color: #09090b;
+  --toast-border: rgba(15, 23, 42, 0.12);
+  --selection-bg: #fce8e8;
+  --selection-text: #9f1239;
+  --web-bg-strand: #94a3b8;
+  --web-bg-strand-opacity: 0.35;
+  --web-bg-strand-opacity-outer: 0.18;
+  --web-bg-strand-glow: transparent;
+  --strand-dot: rgba(186, 60, 60, 0.50);
+  --web-pulse-a: #ba3c3c;
+  --web-pulse-b: #9f1239;
+  --web-dew: #ffffff;
+  --web-ripple: #ba3c3c;
+  --grid-bg: transparent;
+  --grid-line: rgba(148, 163, 184, 0.16);
+  --grid-pulse-a: #0284c7;
+  --grid-pulse-b: #e11d48;
+  --grid-node-glow: rgba(2, 132, 199, 0.2);
+  --grid-pulse-opacity: 0.45;
+  color-scheme: light;
+}
+
+html.light[data-skin="web"] body,
+html[data-theme="light"][data-skin="web"] body {
+  background-color: #fdfbf7 !important;
+  color: #09090b !important;
+}
+
+/* ==========================================================================
+   1. CUTOUT FRAMES & ELIMINATION OF ROUNDED RECTANGLES
+   ========================================================================== */
+
+/* ==========================================================================
+   BRAND LOGO & EMBLEM PROTECTION
+   Guarantees the official brand logo is NEVER sheared, clipped, or deformed
+   ========================================================================== */
+.brand-logo,
+[data-logo],
+.brand-logo * {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+
+/* Universal elimination of plain rounded rectangles in Web Theme — apply geometric chamfers */
+/* 
+ * CRITICAL RULE: Content Protection
+ * Containers (cards, panels, code blocks, modals, tables, dialogs) must NEVER
+ * have arbitrary clip-paths applied via universal classes because clip-path
+ * slices into toolbars, headers, scrollbars, borders, and child text.
+ * Dedicated cutout containers (e.g. .cutout-card, <Cutout>) provide safe padding.
+ */
+
+/* Plain / text / ghost / transparent buttons: NEVER clip */
+html[data-skin="web"] button:not([class*="bg-"]):not([class*="border"]):not(.cutout-btn):not([class*="btn-"]),
+html[data-skin="web"] button.bg-transparent,
+html[data-skin="web"] button[data-ghost],
+html[data-skin="web"] button[data-plain],
+html[data-skin="web"] button.no-chamfer,
+html[data-skin="web"] button[class*="hover:text-"]:not([class*="bg-"]):not([class*="border"]) {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  border-radius: 4px;
+}
+
+/* Explicit exemption classes for any element that must never be clipped */
+.no-chamfer,
+.no-cut,
+[data-no-cut],
+[data-ghost],
+[data-plain] {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+
+/* Standard Styled Buttons (6px safe chamfer - preserves text and padding) */
+html[data-skin="web"] button:is([class*="bg-"], [class*="border"], .cutout-btn, .btn, [type="submit"]):not([data-circle]):not(.no-chamfer):not([data-ghost]):not([data-plain]):not(.brand-logo):not([data-logo]):not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+
+/* Compact Badges / Chips / Small Pill Buttons (height < 28px or py-0.5 / py-1: safe 3.5px chamfer) */
+html[data-skin="web"] button:is([class*="py-0.5"], [class*="py-1"], [class*="text-[10px]"], [class*="text-[11px]"], [class*="text-xs"], .cutout-chip):is([class*="bg-"], [class*="border"]):not(.no-chamfer) {
+  border-radius: 0 !important;
+  clip-path: polygon(3.5px 0, calc(100% - 3.5px) 0, 100% 3.5px, 100% calc(100% - 3.5px), calc(100% - 3.5px) 100%, 3.5px 100%, 0 calc(100% - 3.5px), 0 3.5px) !important;
+  -webkit-clip-path: polygon(3.5px 0, calc(100% - 3.5px) 0, 100% 3.5px, 100% calc(100% - 3.5px), calc(100% - 3.5px) 100%, 3.5px 100%, 0 calc(100% - 3.5px), 0 3.5px) !important;
+}
+
+/* Full pill / rounded-full badges (5px chamfer for badges, circle protection for avatars/dots) */
+html[data-skin="web"] .rounded-full:is(button, .badge, [role="button"]):not([data-circle]):not(span[class*="w-1."]):not(span[class*="w-2"]):not(div[class*="w-6"]):not(div[class*="w-8"]):not(img):not(.brand-logo):not(.no-chamfer) {
+  border-radius: 0 !important;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
+  -webkit-clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
+}
+
+/* Form Inputs (6px chamfer for tech edge without clipping input text) */
+html[data-skin="web"] input[type="text"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="email"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="password"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="url"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] textarea:not(.no-chamfer),
+html[data-skin="web"] select:not(.no-chamfer) {
+  border-radius: 0 !important;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+
+/* 
+ * 2-Layer Outer/Inner Chamfer Cutout Architecture:
+ * - Outer stroke layer: 1px bone stroke at 22% opacity (background: rgba(241, 232, 218, 0.22), padding: 1px)
+ * - Inner layer: inset 1px with identical polygon clip-path
+ */
+.cutout-outer-card {
+  position: relative;
+  padding: 1px;
+  background: var(--cutout-stroke, rgba(241, 232, 218, 0.22));
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  border-radius: 0 !important;
+  box-shadow: var(--shadow-card);
+  filter: var(--drop-shadow-card, none);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.cutout-outer-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  filter: var(--drop-shadow-card-hover, none);
+}
+
+.cutout-inner-card {
+  width: 100%;
+  height: 100%;
+  background: var(--cutout-inner-bg);
+  box-shadow: var(--cutout-inner-shadow);
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+.cutout-outer-btn,
+.cutout-outer-input {
+  position: relative;
+  padding: 1px;
+  background: var(--cutout-stroke, rgba(241, 232, 218, 0.22));
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  border-radius: 0 !important;
+}
+
+.cutout-inner-btn,
+.cutout-inner-input {
+  width: 100%;
+  height: 100%;
+  background: var(--cutout-inner-bg);
+  box-shadow: var(--cutout-inner-shadow);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+
+.cutout-outer-chip {
+  position: relative;
+  padding: 1px;
+  background: var(--cutout-stroke, rgba(241, 232, 218, 0.22));
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  border-radius: 0 !important;
+}
+
+.cutout-inner-chip {
+  width: 100%;
+  height: 100%;
+  background: var(--cutout-inner-bg);
+  box-shadow: var(--cutout-inner-shadow);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+}
+
+/* Chamfer Cutout polygon utilities */
+.cutout-card {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+.cutout-card-tr {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+.cutout-card-bl {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+.cutout-btn,
+.cutout-input {
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+
+.cutout-chip {
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+}
+
+/* ==========================================================================
+   2. DEPTH WITHOUT GLOW (Three Surface Levels + Highlight) - Dark Mode
+   ========================================================================== */
+
+/* Level 1: Page background #000000 */
+html.dark[data-skin="web"] :is(
+  .bg-\[\#030005\], [class*="bg-[#030005]"],
+  .bg-black, [class*="bg-black"]
+) {
+  background-color: #000000 !important;
+}
+
+/* Level 2: Card surfaces with sleek obsidian fill #101014 to #08080a */
+html.dark[data-skin="web"] :is(
+  .bg-neutral-900, [class~="dark:bg-neutral-900"], [class~="bg-neutral-900"],
+  .bg-zinc-900, [class~="dark:bg-zinc-900"], [class~="bg-zinc-900"],
+  .bg-neutral-950, [class~="dark:bg-neutral-950"], [class~="bg-neutral-950"],
+  .bg-zinc-950, [class~="dark:bg-zinc-950"], [class~="bg-zinc-950"],
+  [class*="bg-[#0E0E12]"],
+  [class*="bg-[#121214]"],
+  [class*="bg-[#111113]"],
+  [class*="bg-[#18181B]"],
+  [class*="bg-[#13101C]"],
+  [class*="bg-[#14111E]"],
+  [class*="bg-[#120F1A]"],
+  [class*="bg-[#110E1A]"],
+  [class*="bg-[#0E0C16]"],
+  [class*="bg-[#120F1D]"],
+  [class*="bg-[#161224]"],
+  [class*="bg-[#0F0F12]"]
+) {
+  background: linear-gradient(135deg, #101014 0%, #08080b 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Translucent surfaces & card opacities -> Uniform stealth ink surface rgba(12, 12, 15, 0.95) */
+html.dark[data-skin="web"] :is(
+  .bg-neutral-900\/40, [class*="bg-neutral-900/40"],
+  .bg-neutral-900\/50, [class*="bg-neutral-900/50"],
+  .bg-neutral-900\/60, [class*="bg-neutral-900/60"],
+  .bg-neutral-900\/70, [class*="bg-neutral-900/70"],
+  .bg-neutral-900\/80, [class*="bg-neutral-900/80"],
+  .bg-neutral-900\/90, [class*="bg-neutral-900/90"],
+  .bg-neutral-900\/95, [class*="bg-neutral-900/95"],
+  .bg-neutral-950\/50, [class*="bg-neutral-950/50"],
+  .bg-neutral-950\/60, [class*="bg-neutral-950/60"],
+  .bg-neutral-950\/70, [class*="bg-neutral-950/70"],
+  .bg-neutral-950\/80, [class*="bg-neutral-950/80"],
+  .bg-neutral-950\/85, [class*="bg-neutral-950/85"],
+  .bg-neutral-950\/90, [class*="bg-neutral-950/90"],
+  .bg-\[\#0E0E12\]\/95, [class*="bg-[#0E0E12]/95"]
+) {
+  background-color: rgba(12, 12, 15, 0.95) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Level 3: Elevated surfaces #18181d */
+html.dark[data-skin="web"] :is(
+  .bg-neutral-800, [class~="dark:bg-neutral-800"], [class~="bg-neutral-800"],
+  .bg-zinc-800, [class~="dark:bg-zinc-800"], [class~="bg-zinc-800"],
+  [class*="bg-[#14111D]"],
+  [class*="bg-[#15121F]"]
+) {
+  background-color: #18181d !important;
+}
+
+/* Silver strokes at subtle 12% opacity */
+html.dark[data-skin="web"] :is(
+  .border-neutral-800, [class*="border-neutral-800"],
+  .border-neutral-700, [class*="border-neutral-700"],
+  .border-zinc-800, [class*="border-zinc-800"],
+  [class*="border-[#262135]"],
+  [class*="border-[#282236]"],
+  [class*="border-[#241F32]"],
+  [class*="border-[#262035]"],
+  [class*="border-[#352D4A]"],
+  [class*="border-[#2B253D]"],
+  [class*="border-[#2B243E]"]
+) {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Text hierarchy under Web theme - Crisp White & Silver */
+html.dark[data-skin="web"] :is(
+  .text-neutral-100, [class~="dark:text-neutral-100"], [class~="text-neutral-100"],
+  .text-white, [class~="dark:text-white"], [class~="text-white"]
+) {
+  color: #ffffff !important;
+}
+
+html.dark[data-skin="web"] :is(
+  .text-neutral-300, [class~="dark:text-neutral-300"], [class~="text-neutral-300"],
+  .text-neutral-400, [class~="dark:text-neutral-400"], [class~="text-neutral-400"],
+  .text-neutral-500, [class~="dark:text-neutral-500"], [class~="text-neutral-500"],
+  .text-zinc-400, [class~="dark:text-zinc-400"], [class~="text-zinc-400"]
+) {
+  color: #a1a1aa !important;
+}
+
+/* Level 1: Page background #fdfbf7 */
+html.light[data-skin="web"] :is(
+  .bg-\[\#030005\], [class*="bg-[#030005]"],
+  .bg-\[\#0d0507\], [class*="bg-[#0d0507]"],
+  .bg-black, [class*="bg-black"]
+) {
+  background-color: #fdfbf7 !important;
+}
+
+/* Level 2: Card surfaces #ffffff with soft warm shadow */
+html.light[data-skin="web"] :is(
+  .bg-neutral-900, [class~="bg-neutral-900"],
+  .bg-zinc-900, [class~="bg-zinc-900"],
+  .bg-neutral-950, [class~="bg-neutral-950"],
+  .bg-zinc-950, [class~="bg-zinc-950"],
+  [class*="bg-[#0E0E12]"],
+  [class*="bg-[#121214]"],
+  [class*="bg-[#111113]"],
+  [class*="bg-[#18181B]"],
+  [class*="bg-[#1a0b0f]"],
+  [class*="bg-[#13101C]"],
+  [class*="bg-[#14111E]"],
+  [class*="bg-[#120F1A]"],
+  [class*="bg-[#110E1A]"],
+  [class*="bg-[#0E0C16]"],
+  [class*="bg-[#120F1D]"],
+  [class*="bg-[#161224]"],
+  [class*="bg-[#0F0F12]"],
+  [class*="bg-[#0e0a0d]"],
+  [class*="bg-[#0d090c]"],
+  [class*="bg-[#070507]"],
+  [class*="bg-[#140b0e]"],
+  [class*="bg-[#140b0f]"],
+  [class*="bg-[#160d12]"],
+  [class*="bg-[#120d11]"],
+  [class*="bg-[#140e13]"],
+  [class*="bg-[#120c10]"]
+) {
+  background: #ffffff !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Translucent surfaces & card opacities -> Clean white surface rgba(255, 255, 255, 0.95) */
+html.light[data-skin="web"] :is(
+  .bg-neutral-900\/40, [class*="bg-neutral-900/40"],
+  .bg-neutral-900\/50, [class*="bg-neutral-900/50"],
+  .bg-neutral-900\/60, [class*="bg-neutral-900/60"],
+  .bg-neutral-900\/70, [class*="bg-neutral-900/70"],
+  .bg-neutral-900\/80, [class*="bg-neutral-900/80"],
+  .bg-neutral-900\/90, [class*="bg-neutral-900/90"],
+  .bg-neutral-900\/95, [class*="bg-neutral-900/95"],
+  .bg-neutral-950\/50, [class*="bg-neutral-950/50"],
+  .bg-neutral-950\/60, [class*="bg-neutral-950/60"],
+  .bg-neutral-950\/70, [class*="bg-neutral-950/70"],
+  .bg-neutral-950\/80, [class*="bg-neutral-950/80"],
+  .bg-neutral-950\/85, [class*="bg-neutral-950/85"],
+  .bg-neutral-950\/90, [class*="bg-neutral-950/90"],
+  .bg-\[\#0E0E12\]\/95, [class*="bg-[#0E0E12]/95"]
+) {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Level 3: Elevated surfaces #fbf7f0 */
+html.light[data-skin="web"] :is(
+  .bg-neutral-800, [class~="bg-neutral-800"],
+  .bg-zinc-800, [class~="bg-zinc-800"],
+  [class*="bg-[#14111D]"],
+  [class*="bg-[#15121F]"],
+  [class*="bg-[#26111a]"]
+) {
+  background-color: #fbf7f0 !important;
+}
+
+/* Subtle strokes in Light mode */
+html.light[data-skin="web"] :is(
+  .border-neutral-800, [class*="border-neutral-800"],
+  .border-neutral-700, [class*="border-neutral-700"],
+  .border-zinc-800, [class*="border-zinc-800"],
+  [class*="border-[rgba(241,232,218"],
+  [class*="border-[#262135]"],
+  [class*="border-[#282236]"],
+  [class*="border-[#241F32]"],
+  [class*="border-[#262035]"],
+  [class*="border-[#352D4A]"],
+  [class*="border-[#2B253D]"],
+  [class*="border-[#2B243E]"]
+) {
+  border-color: rgba(108, 86, 90, 0.15) !important;
+}
+
+/* Text hierarchy under Web Light */
+html.light[data-skin="web"] :is(
+  .text-neutral-100, [class~="text-neutral-100"],
+  .text-white, [class~="text-white"],
+  [class*="text-[#f1e8da]"],
+  .text-theme-main, [class~="text-theme-main"],
+  .text-bone, [class~="text-bone"],
+  .text-\[var\(--text-main\)\],
+  .text-\[var\(--bone\)\]
+):not([data-theme="dark"] *):not(.dark-surface *):not(button[class*="bg-red-600"] *):not(button[class*="bg-[#BA3C3C]"] *):not(button[class*="from-red-600"] *):not(a[class*="bg-red-600"] *):not(a[class*="from-red-600"] *) {
+  color: #09090b !important;
+}
+
+html.light[data-skin="web"] :is(
+  .text-neutral-300, [class~="text-neutral-300"],
+  .text-neutral-400, [class~="text-neutral-400"],
+  .text-neutral-500, [class~="text-neutral-500"],
+  .text-zinc-400, [class~="text-zinc-400"],
+  [class*="text-[#b9a29b]"],
+  .text-theme-muted, [class~="text-theme-muted"],
+  .text-bone-muted, [class~="text-bone-muted"],
+  .text-\[var\(--text-muted\)\],
+  .text-\[var\(--bone-muted\)\]
+):not([data-theme="dark"] *):not(.dark-surface *) {
+  color: #475569 !important;
+}
+
+/* Ensure Cutout card containers default to dark readable text in Web Light */
+html.light[data-skin="web"] :is(.cutout-inner-card, [style*="var(--cutout-inner-bg)"], [style*="--cutout-inner-bg"]) {
+  color: #09090b;
+}
+
+/* ==========================================================================
+   DARK SURFACE & MODAL CONTRAST PRESERVATION (Semantic Container Scoping)
+   Preserves dark theme CSS variables inside intentional dark dialogs and dark surfaces
+   ========================================================================== */
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) {
+  --bg-main: #000000;
+  --surface: #070709;
+  --surface-card: #0f0f13;
+  --surface-hover: #18181d;
+  --text-main: #ffffff;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+  --bone: #ffffff;
+  --bone-muted: #a1a1aa;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --editor-bg: #0E0E12;
+  --editor-header: #121214;
+  --editor-gutter: #0E0E12;
+  --editor-gutter-text: #71717a;
+  --editor-border: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) :is(.text-white, [class~="text-white"], .text-neutral-100, .text-neutral-200, h1, h2, h3, h4) {
+  color: #ffffff !important;
+}
+
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) :is(.text-neutral-300, .text-neutral-400, .text-neutral-500, .text-zinc-400) {
+  color: #a1a1aa !important;
+}
+
+/* Solid Red / Brand Action Buttons must ALWAYS have crisp white text */
+html.light[data-skin="web"] :is(
+  button[class*="bg-[#BA3C3C]"],
+  button[class*="from-[#BA3C3C]"],
+  button[class*="bg-red-600"],
+  button[class*="bg-red-700"],
+  button[class*="from-red-600"],
+  button[class*="from-red-700"],
+  button[class*="bg-rose-600"],
+  a[class*="bg-[#BA3C3C]"],
+  a[class*="from-[#BA3C3C]"],
+  a[class*="bg-red-600"],
+  a[class*="bg-red-700"],
+  a[class*="from-red-600"],
+  a[class*="from-red-700"],
+  a[class*="bg-rose-600"],
+  [class*="from-[#BA3C3C]"],
+  [class*="from-[#BA3C3C]"] *,
+  button[class*="bg-[#BA3C3C]"] *,
+  button[class*="from-[#BA3C3C]"] *,
+  button[class*="bg-red-600"] *,
+  button[class*="bg-red-700"] *,
+  button[class*="from-red-600"] *,
+  button[class*="from-red-700"] *,
+  a[class*="bg-[#BA3C3C]"] *,
+  a[class*="from-[#BA3C3C]"] *,
+  a[class*="bg-red-600"] *,
+  a[class*="bg-red-700"] *,
+  a[class*="from-red-600"] *,
+  a[class*="from-red-700"] *
+):not([class*="/"]):not([class*="bg-red-500/"]):not([class*="bg-red-50"]):not([class*="dark:from-red-"]) {
+  color: #ffffff !important;
+}
+
+/* Translucent red badges and filter pills must keep high-contrast dark red text in light mode */
+html.light[data-skin="web"] :is(
+  button[class*="bg-red-500/"],
+  button[class*="bg-red-600/"],
+  span[class*="bg-red-500/"],
+  span[class*="bg-red-600/"],
+  span[class*="bg-red-50"]
+):not([data-theme="dark"] *):not(.dark-surface *) {
+  color: #ba3c3c !important;
+}
+
+html.light[data-skin="web"] :is(
+  button[class*="bg-red-500/"],
+  button[class*="bg-red-600/"],
+  span[class*="bg-red-500/"],
+  span[class*="bg-red-600/"],
+  span[class*="bg-red-50"]
+):not([data-theme="dark"] *):not(.dark-surface *) :is(span, [class*="text-red-"]) {
+  color: #ba3c3c !important;
+}
+
+/* Ensure modal dialog cards and child surfaces retain their dark background */
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) :is(.bg-\[\#0E0E12\], [class*="bg-[#0E0E12]"]) {
+  background-color: #0E0E12 !important;
+}
+
+/* Prevent white form inputs and white textareas inside dark surfaces */
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) input {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html.light[data-skin="web"] :is([data-theme="dark"], .dark-surface) textarea:not([data-stufu-body] textarea) {
+  background-color: #0B0B0E !important;
+  color: #f1f5f9 !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   3. BAN ON NEON, HALOS, AND BLUR
+   ========================================================================== */
+html[data-skin="web"] .blur-\[100px\],
+html[data-skin="web"] .blur-\[90px\],
+html[data-skin="web"] .blur-2xl,
+html[data-skin="web"] .blur-3xl,
+html[data-skin="web"] .blur-lg,
+html[data-skin="web"] .animate-name-glow {
+  display: none !important;
+}
+
+/* Card hover: 2px upward lift and soft warm shadow */
+html[data-skin="web"] .cutout-card,
+html[data-skin="web"] .cutout-card-tr,
+html[data-skin="web"] .cutout-card-bl {
+  box-shadow: var(--shadow-card);
+  filter: var(--drop-shadow-card, none);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+html[data-skin="web"] .cutout-card:hover,
+html[data-skin="web"] .cutout-card-tr:hover,
+html[data-skin="web"] .cutout-card-bl:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  filter: var(--drop-shadow-card-hover, none);
+}
+
+/* ==========================================================================
+   4. TYPOGRAPHY (Zero RGB Subpixel Color Diffusion)
+   ========================================================================== */
+html[data-skin="web"],
+html[data-skin="web"] * {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+html[data-skin="web"] select,
+html[data-skin="web"] option {
+  color-scheme: dark !important;
+  background-color: #121216 !important;
+  color: #f5f5f5 !important;
+}
+
+html[data-skin="web"] h1,
+html[data-skin="web"] h2,
+html[data-skin="web"] h3,
+html[data-skin="web"] .font-extrabold {
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* ==========================================================================
+   5. MOTION: PAGE ENTER & DRAW KEYFRAMES
+   ========================================================================== */
+@keyframes pageEnterRise {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-enter {
+  animation: pageEnterRise 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes webStrandDraw {
+  from {
+    stroke-dashoffset: 750;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes webRingDraw {
+  from {
+    stroke-dashoffset: 900;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes threadSway {
+  0% {
+    transform: rotate(-1.5deg);
+  }
+  100% {
+    transform: rotate(1.5deg);
+  }
+}
+
+.thread-sway {
+  transform-origin: top center;
+  animation: threadSway 7s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .thread-sway,
+  .hero-web-strand,
+  .hero-web-ring {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   6. SCROLLBAR & SELECTION
+   ========================================================================== */
+html[data-skin="web"] ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+html[data-skin="web"] ::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, #0d0507);
+}
+
+html[data-skin="web"] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, rgba(241, 232, 218, 0.22));
+}
+
+html[data-skin="web"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, rgba(214, 58, 58, 0.6));
+}
+
+html[data-skin="web"] ::selection {
+  background-color: var(--selection-bg, #6e1d24);
+  color: var(--selection-text, #f1e8da);
+}
+
+/* ==========================================================================
+   7. DIFFICULTY CHIPS: MUTED PALETTE (Dark Mode)
+   ========================================================================== */
+html.dark[data-skin="web"] :is(.text-emerald-400, [class*="text-emerald-400"], .text-green-400, [class*="text-green-400"]) {
+  color: #cfe8d8 !important;
+}
+
+html.dark[data-skin="web"] :is(.bg-emerald-500\/10, [class*="bg-emerald-500/10"], .bg-green-500\/10, [class*="bg-green-500/10"]) {
+  background-color: #2f4a3c !important;
+}
+
+html.dark[data-skin="web"] :is(.text-amber-400, [class*="text-amber-400"], .text-yellow-400, [class*="text-yellow-400"]) {
+  color: #f0d9a8 !important;
+}
+
+html.dark[data-skin="web"] :is(.bg-amber-500\/10, [class*="bg-amber-500/10"], .bg-yellow-500\/10, [class*="bg-yellow-500/10"]) {
+  background-color: #5a4320 !important;
+}
+
+html.dark[data-skin="web"] :is(.text-rose-400, [class*="text-rose-400"]) {
+  color: #f6cfd2 !important;
+}
+
+html.dark[data-skin="web"] :is(.bg-rose-500\/10, [class*="bg-rose-500/10"]) {
+  background-color: #7a2230 !important;
+}
+
+/* ==========================================================================
+   8. DIFFICULTY CHIPS: MUTED PALETTE (Light Mode)
+   ========================================================================== */
+html.light[data-skin="web"] :is(.text-emerald-400, [class*="text-emerald-400"], .text-green-400, [class*="text-green-400"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  color: #15803d !important;
+}
+
+html.light[data-skin="web"] :is(.bg-emerald-500\/10, [class*="bg-emerald-500/10"], .bg-green-500\/10, [class*="bg-green-500/10"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  background-color: #dcfce7 !important;
+}
+
+html.light[data-skin="web"] :is(.text-amber-400, [class*="text-amber-400"], .text-yellow-400, [class*="text-yellow-400"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  color: #b45309 !important;
+}
+
+html.light[data-skin="web"] :is(.bg-amber-500\/10, [class*="bg-amber-500/10"], .bg-yellow-500\/10, [class*="bg-yellow-500/10"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  background-color: #fef3c7 !important;
+}
+
+html.light[data-skin="web"] :is(.text-rose-400, [class*="text-rose-400"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  color: #be123c !important;
+}
+
+html.light[data-skin="web"] :is(.bg-rose-500\/10, [class*="bg-rose-500/10"]):not([data-theme="dark"] *):not(.dark-surface *) {
+  background-color: #ffe4e6 !important;
+}
+
+/* ==========================================================================
+   9. SYSTEM CONTROLS & WIDGET TOKENS (Scoped strictly to Web Skin)
+   ========================================================================== */
+
+/* Form Inputs & Controls */
+html[data-skin="web"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not(.brand-logo):not(.bg-transparent),
+html[data-skin="web"] textarea:not(.bg-transparent),
+html[data-skin="web"] select {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-main) !important;
+  caret-color: var(--text-main) !important;
+}
+
+html[data-skin="web"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not(.brand-logo)::placeholder,
+html[data-skin="web"] textarea::placeholder {
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+}
+
+html[data-skin="web"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not(.brand-logo):focus,
+html[data-skin="web"] textarea:focus,
+html[data-skin="web"] select:focus {
+  border-color: var(--input-focus-border) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--input-focus-ring) !important;
+}
+
+/* Stufu Code Editor Chrome */
+html[data-skin="web"] [data-stufu-editor] {
+  background-color: var(--editor-bg) !important;
+}
+
+html[data-skin="web"] [data-stufu-header],
+html[data-skin="web"] [data-stufu-console-header] {
+  background-color: var(--editor-header) !important;
+  border-color: var(--editor-border) !important;
+}
+
+html[data-skin="web"] [data-stufu-gutter] {
+  background-color: var(--editor-gutter) !important;
+  border-color: var(--editor-border) !important;
+  color: var(--editor-gutter-text) !important;
+}
+
+html[data-skin="web"] [data-stufu-body] {
+  background-color: var(--editor-bg) !important;
+}
+
+html[data-skin="web"] [data-stufu-body] pre {
+  color: var(--text-main, #09090b) !important;
+}
+
+html[data-skin="web"] [data-stufu-body] textarea {
+  background-color: transparent !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: var(--text-main, #09090b) !important;
+}
+
+html[data-skin="web"] [data-stufu-console] {
+  background-color: var(--editor-bg) !important;
+  border-color: var(--editor-border) !important;
+}
+
+/* Progress Bars */
+html[data-skin="web"] :is(.h-1, .h-1\.5, .h-2):has(> [style*="width:"]) {
+  background-color: var(--progress-track) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+html[data-skin="web"] :is(.h-1, .h-1\.5, .h-2) > [style*="width:"] {
+  background: var(--progress-fill) !important;
+}
+
+/* Tables */
+html[data-skin="web"] table {
+  border-color: var(--table-border) !important;
+}
+
+html[data-skin="web"] table thead {
+  background-color: var(--table-row-hover) !important;
+  border-color: var(--table-border) !important;
+}
+
+html[data-skin="web"] table th {
+  border-color: var(--table-border) !important;
+  color: var(--text-muted) !important;
+}
+
+html[data-skin="web"] table td {
+  border-color: var(--table-border) !important;
+  color: var(--text-main) !important;
+}
+
+html[data-skin="web"] table tbody tr {
+  border-color: var(--table-border) !important;
+}
+
+html[data-skin="web"] table tbody tr:hover {
+  background-color: var(--table-row-hover) !important;
+}
+
+html[data-skin="web"] table tbody tr:nth-child(even) {
+  background-color: var(--table-row-stripe);
+}
+
+/* Modals & Dialogs */
+html[data-skin="web"] [role="dialog"] > div,
+html[data-skin="web"] .modal-content {
+  background-color: var(--modal-bg) !important;
+  border-color: var(--modal-border) !important;
+  color: var(--text-main) !important;
+}
+
+html[data-skin="web"] [role="dialog"] h1,
+html[data-skin="web"] [role="dialog"] h2,
+html[data-skin="web"] [role="dialog"] h3 {
+  color: var(--text-main) !important;
+}
+
+html[data-skin="web"] [role="dialog"] p {
+  color: var(--text-muted) !important;
+}
+
+/* Dropdowns & Popovers */
+html[data-skin="web"] [role="menu"],
+html[data-skin="web"] [role="listbox"],
+html[data-skin="web"] .dropdown-menu {
+  background-color: var(--dropdown-bg) !important;
+  border-color: var(--dropdown-border) !important;
+  color: var(--text-main) !important;
+}
+
+/* Toast Notifications */
+html[data-skin="web"] .Toastify__toast,
+html[data-skin="web"] [data-sonner-toast],
+html[data-skin="web"] div:has(> [data-sonner-toast]) {
+  background-color: var(--toast-bg) !important;
+  color: var(--toast-color) !important;
+  border-color: var(--toast-border) !important;
+}
+
+/* Sidebar Drawer */
+html[data-skin="web"] aside {
+  background-color: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+}
+

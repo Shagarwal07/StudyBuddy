@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Code2,
   ExternalLink,
@@ -74,8 +75,13 @@ function SyncSheetModal({ isOpen, sheet, onClose, onSync, loading }) {
 
   const isOfficial = sheet.isOfficial || sheet.uploadedBy === "Developer / Admin";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !loading) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+    >
       <div className="bg-[#121214] border border-neutral-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
@@ -189,7 +195,8 @@ function SyncSheetModal({ isOpen, sheet, onClose, onSync, loading }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -546,19 +553,19 @@ export default function Practice() {
                 <button
                   type="button"
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-neutral-900/60 hover:bg-neutral-800/80 border border-neutral-800 hover:border-neutral-700 text-xs font-medium text-neutral-200 transition cursor-pointer shadow-xs"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-neutral-900/60 dark:hover:bg-neutral-800/80 border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 text-xs font-medium text-slate-800 dark:text-neutral-200 transition cursor-pointer shadow-xs"
                 >
-                  <Layers className="w-3.5 h-3.5 text-red-400" />
-                  <span className="font-semibold text-neutral-200">
+                  <Layers className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
+                  <span className="font-semibold text-slate-800 dark:text-neutral-200">
                     {currentSheet?.title || "Select Sheet"}
                   </span>
                   {currentSheet && (
-                    <span className="text-[11px] font-mono text-red-400 bg-[#0E0E12] px-1.5 py-0.5 rounded border border-neutral-800">
+                    <span className="text-[11px] font-mono text-red-600 dark:text-red-400 bg-white dark:bg-[#0E0E12] px-1.5 py-0.5 rounded border border-slate-200 dark:border-neutral-800">
                       {currentSheet.solved ?? 0}/{currentSheet.total ?? 0}
                     </span>
                   )}
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
+                    className={`w-3.5 h-3.5 text-slate-400 dark:text-neutral-400 transition-transform duration-200 ${
                       isDropdownOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -566,11 +573,11 @@ export default function Practice() {
 
                 {/* Flyout Menu */}
                 {isDropdownOpen && (
-                  <div className="absolute left-0 mt-1.5 w-72 sm:w-80 rounded-xl bg-[#121214] border border-neutral-800 shadow-2xl p-1.5 z-40 backdrop-blur-md animate-fade-in text-xs space-y-1">
+                  <div className="absolute left-0 mt-1.5 w-72 sm:w-80 rounded-xl bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 shadow-xl dark:shadow-2xl p-1.5 z-40 backdrop-blur-md animate-fade-in text-xs space-y-1">
                     {/* Section 1: Enrolled Sheets */}
                     {sheets.length > 0 && (
                       <div className="space-y-0.5">
-                        <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-neutral-500">
+                        <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-neutral-500">
                           My Enrolled Sheets
                         </div>
                         {sheets.map((s) => {
@@ -580,8 +587,8 @@ export default function Practice() {
                               key={s.id}
                               className={`flex items-center justify-between px-2.5 py-2 rounded-lg transition group ${
                                 isSelected
-                                  ? "bg-red-500/10 text-red-400 font-semibold border border-red-500/25"
-                                  : "text-neutral-300 hover:bg-neutral-800/60 hover:text-white"
+                                  ? "bg-red-500/10 text-red-600 dark:text-red-400 font-semibold border border-red-500/25"
+                                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-neutral-300 dark:hover:bg-neutral-800/60 dark:hover:text-white"
                               }`}
                             >
                               <button
@@ -595,22 +602,22 @@ export default function Practice() {
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                                 <span className="truncate">{s.title}</span>
                                 {s.isOfficial || s.uploadedBy === "Developer / Admin" ? (
-                                  <span className="px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 text-[9px] font-medium shrink-0 flex items-center gap-0.5">
-                                    <ShieldCheck className="w-2.5 h-2.5 text-red-400" />
+                                  <span className="px-1.5 py-0.2 rounded bg-red-500/15 text-red-600 dark:text-red-300 border border-red-500/25 text-[9px] font-medium shrink-0 flex items-center gap-0.5">
+                                    <ShieldCheck className="w-2.5 h-2.5 text-red-500 dark:text-red-400" />
                                     <span>Dev</span>
                                   </span>
                                 ) : (
-                                  <span className="px-1.5 py-0.2 rounded bg-neutral-800 text-neutral-400 text-[9px] font-medium shrink-0">
+                                  <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 text-[9px] font-medium shrink-0">
                                     Personal
                                   </span>
                                 )}
                                 {s.sourceUrl && (
-                                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[9px] font-mono shrink-0 flex items-center gap-0.5">
+                                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[9px] font-mono shrink-0 flex items-center gap-0.5">
                                     <Link2 className="w-2.5 h-2.5" />
                                     <span>Synced</span>
                                   </span>
                                 )}
-                                <span className="text-[10px] font-mono text-neutral-400 shrink-0">
+                                <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-400 shrink-0">
                                   ({s.solved ?? 0}/{s.total ?? 0})
                                 </span>
                               </button>
@@ -623,7 +630,7 @@ export default function Practice() {
                                   e.stopPropagation();
                                   handleUnenroll(s.id);
                                 }}
-                                className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer ml-1"
+                                className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-neutral-500 dark:hover:text-red-400 dark:hover:bg-red-950/40 transition cursor-pointer ml-1"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -634,8 +641,8 @@ export default function Practice() {
                     )}
 
                     {/* Section 2: EXISTING ROADMAP: */}
-                    <div className="pt-1 border-t border-neutral-800 space-y-0.5">
-                      <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-red-400">
+                    <div className="pt-1 border-t border-slate-200 dark:border-neutral-800 space-y-0.5">
+                      <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-red-500 dark:text-red-400">
                         EXISTING ROADMAP (DEVELOPER):
                       </div>
                       {catalog.map((cat) => {
@@ -644,7 +651,7 @@ export default function Practice() {
                         return (
                           <div
                             key={cat.id}
-                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-neutral-300 hover:bg-neutral-800/60 hover:text-red-400 transition group"
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:text-neutral-300 dark:hover:bg-neutral-800/60 dark:hover:text-red-400 transition group"
                           >
                             <button
                               type="button"
@@ -652,17 +659,17 @@ export default function Practice() {
                               onClick={() => handleEnroll(cat.id)}
                               className="flex items-center gap-2 truncate flex-1 text-left cursor-pointer disabled:opacity-50"
                             >
-                              <Plus className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                              <Plus className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
                               <span className="truncate">{cat.title}</span>
                               {(cat.isOfficial !== false || cat.uploadedBy === "Developer / Admin") && (
-                                <span className="px-1.5 py-0.2 rounded bg-red-500/15 text-red-300 border border-red-500/25 text-[9px] font-medium shrink-0 flex items-center gap-0.5">
-                                  <ShieldCheck className="w-2.5 h-2.5 text-red-400" />
+                                <span className="px-1.5 py-0.2 rounded bg-red-500/15 text-red-600 dark:text-red-300 border border-red-500/25 text-[9px] font-medium shrink-0 flex items-center gap-0.5">
+                                  <ShieldCheck className="w-2.5 h-2.5 text-red-500 dark:text-red-400" />
                                   <span>Dev</span>
                                 </span>
                               )}
                             </button>
                             <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                              <span className="text-[10px] font-mono text-neutral-400">
+                              <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-400">
                                 {cat.total} prob
                               </span>
                               {(cat.isCustom || (user?.role === "admin" && !["strivers-180", "sql-75", "codeforces-ladder", "os", "dbms", "cn", "sql"].includes(cat.id))) && (
@@ -674,7 +681,7 @@ export default function Practice() {
                                     e.stopPropagation();
                                     handleDeleteSheet(cat.id);
                                   }}
-                                  className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
+                                  className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-neutral-500 dark:hover:text-red-400 dark:hover:bg-red-950/40 transition cursor-pointer"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>
@@ -691,7 +698,7 @@ export default function Practice() {
                           setIsDropdownOpen(false);
                           setShowCustomModal(true);
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-red-400 hover:bg-neutral-800/60 font-semibold transition text-left cursor-pointer mt-1 border-t border-neutral-800"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-red-600 hover:bg-slate-100 dark:text-red-400 dark:hover:bg-neutral-800/60 font-semibold transition text-left cursor-pointer mt-1 border-t border-slate-200 dark:border-neutral-800"
                       >
                         <FileCode2 className="w-3.5 h-3.5" />
                         <span>+ Direct Import Custom Sheet...</span>
@@ -719,7 +726,7 @@ export default function Practice() {
                   setShowSyncModal(true);
                 }}
                 disabled={syncingId === currentSheet.id}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900/60 hover:bg-neutral-800/80 border border-neutral-800 hover:border-neutral-700 text-xs font-semibold text-neutral-200 transition cursor-pointer disabled:opacity-50 shadow-xs"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-neutral-900/60 dark:hover:bg-neutral-800/80 border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 text-xs font-semibold text-slate-800 dark:text-neutral-200 transition cursor-pointer disabled:opacity-50 shadow-xs"
                 title={
                   currentSheet.sourceUrl
                     ? `Synced with ${currentSheet.sourceUrl}`
@@ -727,26 +734,27 @@ export default function Practice() {
                 }
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 text-red-400 ${syncingId === currentSheet.id ? "animate-spin" : ""}`}
+                  className={`w-3.5 h-3.5 text-red-500 dark:text-red-400 ${syncingId === currentSheet.id ? "animate-spin" : ""}`}
                 />
                 <span>{syncingId === currentSheet.id ? "Syncing..." : "Sync Sheet"}</span>
                 {currentSheet.sourceUrl && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Cloud Synced" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" title="Cloud Synced" />
                 )}
               </button>
             )}
+
           </div>
 
           {/* Right: Solved Progress & Stats */}
           {Boolean(sheetDetails && Array.isArray(sheetDetails.modules) && totalCount > 0) && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-neutral-400 font-mono">
+              <span className="text-xs text-slate-500 dark:text-neutral-400 font-mono">
                 {solvedCount} / {totalCount} Solved
               </span>
-              <span className="text-xs font-semibold text-red-400 font-mono">
+              <span className="text-xs font-semibold text-red-600 dark:text-red-400 font-mono">
                 {progressPercent}%
               </span>
-              <div className="w-24 h-2 rounded-full bg-neutral-900 border border-neutral-800 overflow-hidden">
+              <div className="w-24 h-2 rounded-full bg-slate-200 dark:bg-neutral-900 border border-slate-300 dark:border-neutral-800 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
@@ -757,20 +765,20 @@ export default function Practice() {
         </section>
 
         {/* Clean Extension & Settings Sync Banner Strip (Matching Sub-header layout) */}
-        <div className="h-11 bg-[#121214] border border-neutral-800 rounded-xl px-4 flex items-center justify-between shrink-0 shadow-xs">
+        <div className="h-11 bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-xl px-4 flex items-center justify-between shrink-0 shadow-xs">
           <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
-            <Code2 className="w-3.5 h-3.5 text-red-400 shrink-0" />
-            <span className="text-xs font-medium text-neutral-200 truncate">
+            <Code2 className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+            <span className="text-xs font-medium text-slate-800 dark:text-neutral-200 truncate">
               Auto-sync coding progress:
             </span>
             <Link
               to="/settings"
-              className="text-xs text-red-400 hover:text-red-300 transition underline underline-offset-2 font-medium shrink-0 flex items-center gap-1"
+              className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition underline underline-offset-2 font-medium shrink-0 flex items-center gap-1"
             >
               <span>Set handles in Settings</span>
               <ExternalLink className="w-3 h-3" />
             </Link>
-            <span className="text-[10px] text-neutral-500 font-mono hidden md:inline shrink-0">
+            <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono hidden md:inline shrink-0">
               (⚠️ Chrome browser required)
             </span>
           </div>
@@ -786,13 +794,13 @@ export default function Practice() {
                   toast.success("StudyBuddy extension package downloaded! 🚀");
                 }
               }}
-              className="text-xs text-neutral-200 hover:text-white bg-neutral-800/80 hover:bg-neutral-700/80 px-2.5 py-1 rounded-lg border border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="text-xs text-slate-700 hover:text-slate-900 dark:text-neutral-200 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
               title="Add StudyBuddy to Chrome"
             >
               {import.meta.env.VITE_CHROME_EXTENSION_URL ? (
-                <ExternalLink className="w-3 h-3 text-red-400" />
+                <ExternalLink className="w-3 h-3 text-red-500 dark:text-red-400" />
               ) : (
-                <Download className="w-3 h-3 text-red-400" />
+                <Download className="w-3 h-3 text-red-500 dark:text-red-400" />
               )}
               <span className="font-medium">Add to Chrome</span>
             </a>
@@ -897,24 +905,24 @@ export default function Practice() {
         ) : (
           <>
             {/* Search & Filter Bar */}
-            <section className="bg-neutral-900/60 border border-neutral-800 rounded-xl p-3.5 shadow-sm">
+            <section className="bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 rounded-xl p-3.5 shadow-xs">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 {/* Search Input */}
                 <div className="relative flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-slate-400 dark:text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search problem title or category..."
-                    className="w-full bg-[#0E0E12] border border-neutral-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-neutral-100 placeholder-neutral-500 outline-none focus:border-red-500"
+                    className="w-full bg-slate-50 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-neutral-100 placeholder-slate-400 dark:placeholder-neutral-500 outline-none focus:border-red-500 transition-colors"
                   />
                 </div>
 
                 {/* Filter Pills */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Difficulty */}
-                  <div className="flex items-center rounded-lg bg-[#0E0E12] border border-neutral-800 p-0.5 text-xs">
+                  <div className="flex items-center rounded-lg bg-slate-100 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800 p-0.5 text-xs">
                     {["ALL", "EASY", "MEDIUM", "HARD"].map((diff) => (
                       <button
                         key={diff}
@@ -922,8 +930,8 @@ export default function Practice() {
                         onClick={() => setSelectedDifficulty(diff)}
                         className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
                           selectedDifficulty === diff
-                            ? "bg-red-500/15 text-red-400 border border-red-500/30 font-semibold"
-                            : "text-neutral-400 hover:text-neutral-200"
+                            ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold"
+                            : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
                         }`}
                       >
                         {diff === "ALL" ? "All Diff" : diff.charAt(0) + diff.slice(1).toLowerCase()}
@@ -932,7 +940,7 @@ export default function Practice() {
                   </div>
 
                   {/* Status */}
-                  <div className="flex items-center rounded-lg bg-[#0E0E12] border border-neutral-800 p-0.5 text-xs">
+                  <div className="flex items-center rounded-lg bg-slate-100 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800 p-0.5 text-xs">
                     {["ALL", "PENDING", "SOLVED"].map((status) => (
                       <button
                         key={status}
@@ -940,8 +948,8 @@ export default function Practice() {
                         onClick={() => setSelectedStatus(status)}
                         className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
                           selectedStatus === status
-                            ? "bg-red-500/15 text-red-400 border border-red-500/30 font-semibold"
-                            : "text-neutral-400 hover:text-neutral-200"
+                            ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold"
+                            : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
                         }`}
                       >
                         {status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}
@@ -953,20 +961,20 @@ export default function Practice() {
             </section>
 
             {/* Problem List Table */}
-            <section className="bg-neutral-900/60 border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+            <section className="bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-xs">
               {sheetLoading ? (
-                <div className="py-20 text-center text-xs text-neutral-500">
+                <div className="py-20 text-center text-xs text-slate-400 dark:text-neutral-500">
                   Loading problem table...
                 </div>
               ) : allProblems.length === 0 ? (
-                <div className="py-16 text-center text-xs text-neutral-400 space-y-2">
-                  <p className="font-semibold text-neutral-200">No problems found</p>
-                  <p className="text-neutral-500">Try adjusting your search query or filter options.</p>
+                <div className="py-16 text-center text-xs text-slate-500 dark:text-neutral-400 space-y-2">
+                  <p className="font-semibold text-slate-800 dark:text-neutral-200">No problems found</p>
+                  <p className="text-slate-400 dark:text-neutral-500">Try adjusting your search query or filter options.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-[#0E0E12] border-b border-neutral-800 text-neutral-400 font-mono text-[11px]">
+                    <thead className="bg-slate-50 dark:bg-[#0E0E12] border-b border-slate-200 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 font-mono text-[11px]">
                       <tr>
                         <th className="py-3 px-4 w-12 text-center">Status</th>
                         <th className="py-3 px-3 w-16 text-center">#</th>
@@ -977,7 +985,7 @@ export default function Practice() {
                         <th className="py-3 px-4 text-right w-36">Practice</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-800/60">
+                    <tbody className="divide-y divide-slate-100 dark:divide-neutral-800/60">
                       {allProblems.map((prob, idx) => {
                         const diff = prob.leetcodeDifficulty || "Medium";
                         const solLink = prob.solutionUrl || prob.instructorUrl || "";
@@ -991,8 +999,8 @@ export default function Practice() {
                         return (
                           <tr
                             key={`${prob.id || prob.key || "prob"}-${idx}`}
-                            className={`hover:bg-neutral-800/30 transition group ${
-                              prob.isSolved ? "bg-red-950/10" : ""
+                            className={`hover:bg-slate-50/80 dark:hover:bg-neutral-800/30 transition group ${
+                              prob.isSolved ? "bg-red-50/60 dark:bg-red-950/10" : ""
                             }`}
                           >
                             {/* Status Checkbox */}
@@ -1000,29 +1008,29 @@ export default function Practice() {
                               <button
                                 type="button"
                                 onClick={() => handleToggleStatus(prob.key || String(prob.id))}
-                                className="text-neutral-500 hover:text-emerald-400 transition cursor-pointer"
+                                className="text-slate-400 hover:text-emerald-500 dark:text-neutral-500 dark:hover:text-emerald-400 transition cursor-pointer"
                                 title={prob.isSolved ? "Mark as pending" : "Mark as solved"}
                               >
                                 {prob.isSolved ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 fill-emerald-500/20" />
                                 ) : (
-                                  <Circle className="w-4 h-4 text-neutral-600 hover:text-neutral-400" />
+                                  <Circle className="w-4 h-4 text-slate-300 dark:text-neutral-600 hover:text-slate-500 dark:hover:text-neutral-400" />
                                 )}
                               </button>
                             </td>
 
                             {/* ID */}
-                            <td className="py-3 px-3 font-mono text-neutral-400 text-[11px] text-center">
-                              <span className="px-1.5 py-0.5 rounded bg-neutral-900/80 border border-neutral-800/80 text-neutral-400 font-mono">
+                            <td className="py-3 px-3 font-mono text-slate-500 dark:text-neutral-400 text-[11px] text-center">
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800/80 text-slate-600 dark:text-neutral-400 font-mono">
                                 #{prob.leetcodeId || prob.id}
                               </span>
                             </td>
 
                             {/* Title */}
-                            <td className="py-3 px-4 font-medium text-neutral-100">
+                            <td className="py-3 px-4 font-medium text-slate-900 dark:text-neutral-100">
                               <span
                                 onClick={() => openStufu(prob, false)}
-                                className="hover:text-red-400 transition cursor-pointer text-xs sm:text-sm line-clamp-1"
+                                className="hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer text-xs sm:text-sm line-clamp-1"
                                 title={prob.title}
                               >
                                 {prob.title}
@@ -1031,7 +1039,7 @@ export default function Practice() {
 
                             {/* Category */}
                             <td className="py-3 px-3 text-center">
-                              <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-md bg-neutral-900 text-neutral-300 border border-neutral-800 font-medium truncate max-w-[120px]">
+                              <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-neutral-900 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-800 font-medium truncate max-w-[120px]">
                                 {prob.module || "General"}
                               </span>
                             </td>
@@ -1055,11 +1063,11 @@ export default function Practice() {
                                     href={judgeLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="px-2 py-0.5 rounded-md bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white transition inline-flex items-center gap-1 text-[11px] font-medium"
+                                    className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white transition inline-flex items-center gap-1 text-[11px] font-medium"
                                     title={`Open official problem on ${getJudgePlatformName(judgeLink, prob.platform)}`}
                                   >
                                     <span>{getJudgePlatformName(judgeLink, prob.platform)}</span>
-                                    <ExternalLink className="w-2.5 h-2.5 text-neutral-400" />
+                                    <ExternalLink className="w-2.5 h-2.5 text-slate-400 dark:text-neutral-400" />
                                   </a>
                                 )}
 
@@ -1068,16 +1076,16 @@ export default function Practice() {
                                     href={solLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:text-purple-100 transition inline-flex items-center gap-1 text-[11px] font-medium"
+                                    className="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-600 dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-100 transition inline-flex items-center gap-1 text-[11px] font-medium"
                                     title="Open instructor's provided solution / notes / video"
                                   >
                                     <span>Instructor Sol</span>
-                                    <ExternalLink className="w-2.5 h-2.5 text-purple-400" />
+                                    <ExternalLink className="w-2.5 h-2.5 text-purple-500 dark:text-purple-400" />
                                   </a>
                                 )}
 
                                 {!hasOfficialJudgeLink && !hasInstructorSol && (
-                                  <span className="text-neutral-700 font-mono text-xs pl-1">—</span>
+                                  <span className="text-slate-300 dark:text-neutral-700 font-mono text-xs pl-1">—</span>
                                 )}
                               </div>
                             </td>
@@ -1088,10 +1096,10 @@ export default function Practice() {
                                 <button
                                   type="button"
                                   onClick={() => openStufu(prob, true)}
-                                  className="px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white transition flex items-center gap-1 text-[11px] cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white transition flex items-center gap-1 text-[11px] cursor-pointer"
                                   title="View Intuition, Editorial & Code Solution"
                                 >
-                                  <BookOpen className="w-3 h-3 text-red-400" />
+                                  <BookOpen className="w-3 h-3 text-red-500 dark:text-red-400" />
                                   <span>Solution</span>
                                 </button>
 

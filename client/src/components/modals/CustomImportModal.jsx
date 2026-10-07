@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   FileCode2,
   UploadCloud,
@@ -406,9 +407,12 @@ export default function CustomImportModal({ isOpen, onClose, onSuccess, isAdmin 
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !loading) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
     >
@@ -445,6 +449,7 @@ export default function CustomImportModal({ isOpen, onClose, onSuccess, isAdmin 
           isAdmin={isAdmin}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

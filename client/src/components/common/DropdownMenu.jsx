@@ -33,7 +33,7 @@ export default function DropdownMenu({ items }) {
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        className="rounded-lg p-2 text-neutral-500 transition-colors duration-200 hover:bg-neutral-800 hover:text-white"
+        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-white transition-colors duration-200"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
@@ -41,7 +41,7 @@ export default function DropdownMenu({ items }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-neutral-800 bg-[#111] shadow-2xl"
+          className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#111] shadow-2xl"
         >
           {items.map((item) => {
             const { icon: Icon, label, danger, onClick } = item;
@@ -58,8 +58,8 @@ export default function DropdownMenu({ items }) {
                 }}
                 className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-200 ${
                   danger
-                    ? "text-red-400 hover:bg-red-500/10"
-                    : "text-neutral-300 hover:bg-neutral-800"
+                    ? "text-rose-600 hover:bg-rose-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
                 }`}
               >
                 <Icon className="h-4 w-4" />

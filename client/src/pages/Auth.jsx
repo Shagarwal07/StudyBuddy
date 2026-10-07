@@ -2,12 +2,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import BackgroundGlow from "../components/common/BackgroundGlow";
 import Loader from "../components/common/Loader";
+import HeroWeb from "../components/web/HeroWeb";
+import Logo from "../components/common/Logo";
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
+  const { isWeb } = useTheme();
 
   const [loaderMounted, setLoaderMounted] = useState(true);
   const [loaderVisible, setLoaderVisible] = useState(true);
@@ -250,7 +254,8 @@ export default function AuthPage() {
       />
 
       {/* SIGNATURE STUDYBUDDY BACKGROUND GLOW */}
-      <BackgroundGlow />
+      {!isWeb && <BackgroundGlow />}
+      {isWeb && <HeroWeb position="tr" size={480} />}
 
       {/* NOISE OVERLAY */}
       <div className="iws-noise-overlay absolute inset-0 pointer-events-none z-10" />
@@ -282,9 +287,7 @@ export default function AuthPage() {
           onClick={handleReturnHome}
           className="flex items-center gap-3.5 group cursor-pointer select-none"
         >
-          <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-[#BA3C3C] to-[#E04D4D] flex items-center justify-center text-white font-mono font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(224,77,77,0.35)] shrink-0 group-hover:scale-105 transition-transform duration-200">
-            &lt;/&gt;
-          </div>
+          <Logo size="lg" />
           <div className="flex flex-col justify-center">
             <span className="text-white font-['Fraunces',serif] font-bold text-xl sm:text-2xl tracking-tight leading-tight group-hover:text-white/90 transition-colors">
               StudyBuddy

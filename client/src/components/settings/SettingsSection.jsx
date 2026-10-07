@@ -2,14 +2,14 @@ export default function SettingsSection({ title, description, children }) {
   return (
     <section className="space-y-3">
       <header>
-        <h2 className="text-sm font-semibold tracking-tight text-neutral-100">
+        <h2 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-neutral-100">
           {title}
         </h2>
 
-        {description && <p className="mt-0.5 text-xs text-neutral-400">{description}</p>}
+        {description && <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">{description}</p>}
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur-sm shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 backdrop-blur-sm shadow-xs dark:shadow-sm">
         {children}
       </div>
     </section>

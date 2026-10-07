@@ -1,4 +1,4 @@
-import { User, Palette, Info, LogOut, Code2, ExternalLink, Unlink } from "lucide-react";
+import { User, Palette, Info, LogOut, Code2, ExternalLink, Unlink, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -13,7 +13,7 @@ import SettingsItem from "../components/settings/SettingsItem";
 
 const TABS = [
   { id: "account", label: "Profile & Account", icon: User },
-  // { id: "appearance", label: "Appearance", icon: Palette }, // Added in Commit 4
+  { id: "appearance", label: "Appearance", icon: Palette },
   { id: "about", label: "About", icon: Info },
   { id: "danger", label: "Danger Zone", icon: LogOut, isDanger: true },
 ];
@@ -28,7 +28,7 @@ const PRESET_BADGES = [
 export default function Settings() {
   const navigate = useNavigate();
   const { logout, refreshUser } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, skin, setSkin, animatedBg, setAnimatedBg, isWeb } = useTheme();
   const [activeTab, setActiveTab] = useState("account");
 
   const { user, loading, updateProfile } = useSettings();
@@ -383,7 +383,7 @@ export default function Settings() {
               <SettingsItem
                 icon={Palette}
                 title="Theme Mode"
-                subtitle="System theme preferences"
+                subtitle="Color theme preference"
                 right={
                   <div className="flex bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs gap-1">
                     <button
@@ -407,6 +407,76 @@ export default function Settings() {
                       }`}
                     >
                       Light
+                    </button>
+                  </div>
+                }
+              />
+              <SettingsItem
+                icon={Sparkles}
+                title="Skin Mode"
+                subtitle="Visual geometry and aesthetic styling"
+                right={
+                  <div className="flex bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSkin("basic")}
+                      className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        skin === "basic"
+                          ? "bg-red-950/30 border border-red-500/40 text-red-400"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                    >
+                      Basic
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSkin("web")}
+                      className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        skin === "web"
+                          ? "bg-[var(--crimson-deep,#6e1d24)] border border-[var(--crimson,#d63a3a)] text-[var(--on-crimson-deep,#f1e8da)]"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                      title="Agency-grade Spider-Web geometric skin"
+                    >
+                      <span>Web</span>
+                      <span className="text-[9px] uppercase tracking-wider px-1 py-0.2 rounded bg-red-500/20 text-red-300 border border-red-500/30 font-mono">
+                        Elite
+                      </span>
+                    </button>
+                  </div>
+                }
+              />
+              <SettingsItem
+                icon={Sparkles}
+                title="Animated Background"
+                subtitle="Living ambient canvas effects on the landing page"
+                right={
+                  <div className="flex bg-[var(--surface-card)] p-1 rounded-xl border border-[var(--border-subtle)] text-xs gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setAnimatedBg(true)}
+                      className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        animatedBg
+                          ? isWeb
+                            ? "bg-[var(--crimson-deep)] border border-[var(--crimson)] text-[var(--on-crimson-deep)]"
+                            : "bg-[var(--surface-hover)] border border-[var(--border-strong)] text-[var(--text-main)]"
+                          : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      }`}
+                    >
+                      On
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnimatedBg(false)}
+                      className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        !animatedBg
+                          ? isWeb
+                            ? "bg-[var(--crimson-deep)] border border-[var(--crimson)] text-[var(--on-crimson-deep)]"
+                            : "bg-[var(--surface-hover)] border border-[var(--border-strong)] text-[var(--text-main)]"
+                          : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      }`}
+                    >
+                      Off
                     </button>
                   </div>
                 }
