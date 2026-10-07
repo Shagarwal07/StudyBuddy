@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Tv, Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AppShell from "../components/layout/AppShell";
+import AppShell, { SidebarTrigger } from "../components/layout/AppShell";
 import PlaylistCard from "../components/playlist/PlaylistCard";
 import api from "../api/axios";
 import CreatePlaylistModal from "../components/modals/CreatePlaylistModal";
@@ -74,7 +74,8 @@ export default function YouTubeHub() {
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
         {/* Top Header */}
         <section className="pt-2 flex items-center justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <SidebarTrigger />
             <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-neutral-100 flex items-center gap-2">
               <Tv className="w-5 h-5 text-red-500 dark:text-red-400" />
               Ad - free Video
