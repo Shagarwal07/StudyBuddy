@@ -27,16 +27,16 @@ export default function SettingsItem({
           : undefined
       }
       className={`flex items-center justify-between p-4 transition-colors ${
-        isClickable ? "cursor-pointer hover:bg-zinc-900/40" : ""
-      } ${isPlaceholder ? "bg-zinc-900/10 opacity-75" : ""}`}
+        isClickable ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/40" : ""
+      } ${isPlaceholder ? "bg-slate-100 dark:bg-zinc-900/10 opacity-75" : ""}`}
     >
       <div className="flex items-start gap-4 max-w-xl">
         {Icon && (
           <div
             className={`p-2 rounded-lg mt-0.5 ${
               danger
-                ? "bg-red-500/10 text-red-400"
-                : "bg-zinc-900 text-zinc-400 border border-zinc-800/60"
+                ? "bg-red-500/10 text-red-500 dark:text-red-400"
+                : "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800/60"
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -45,11 +45,11 @@ export default function SettingsItem({
 
         <div>
           <h3
-            className={`text-sm font-medium ${danger ? "text-red-400" : "text-zinc-200"}`}
+            className={`text-sm font-medium ${danger ? "text-rose-600 dark:text-red-400" : "text-slate-900 dark:text-zinc-200"}`}
           >
             {title}
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5 leading-relaxed">
             {subtitle}
           </p>
           {isPlaceholder && (

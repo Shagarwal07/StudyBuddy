@@ -339,8 +339,8 @@ export default function Prephub() {
               <GraduationCap className="w-5 h-5 text-red-400" />
               Workspace
             </h1>
-            {user?.role === "admin" && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {user?.role === "admin" && (
                 <button
                   type="button"
                   onClick={() => setIsAdminModalOpen(true)}
@@ -355,30 +355,30 @@ export default function Prephub() {
                     </span>
                   )}
                 </button>
+              )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] text-white text-xs font-semibold shadow-md shadow-red-500/20 hover:opacity-95 transition cursor-pointer"
-                  title="Admin: Upload & publish new roadmap card"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Upload Roadmap</span>
-                </button>
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] text-white text-xs font-semibold shadow-md shadow-red-500/20 hover:opacity-95 transition cursor-pointer"
+                title={user?.role === "admin" ? "Admin: Upload & publish new roadmap card" : "Import custom roadmap or sheet"}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{user?.role === "admin" ? "Upload Roadmap" : "Import Sheet"}</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Top Level Group Tabs: CORE CS and DSA */}
-            <div className="inline-flex items-center p-1 rounded-xl bg-[#0E0E12] border border-neutral-800">
+            <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800">
               {coreSubjects.length > 0 && (
                 <button
                   type="button"
                   onClick={() => handleGroupChange("core")}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${activeGroup === "core"
                       ? "bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] text-white shadow-md shadow-red-500/20"
-                      : "text-neutral-400 hover:text-neutral-200"
+                      : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
                     }`}
                 >
                   <Cpu className="w-3.5 h-3.5" />
@@ -386,7 +386,7 @@ export default function Prephub() {
                   <span
                     className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeGroup === "core"
                         ? "bg-black/20 text-white"
-                        : "bg-neutral-800 text-neutral-400"
+                        : "bg-slate-200 text-slate-700 dark:bg-neutral-800 dark:text-neutral-400"
                       }`}
                   >
                     {coreSubjects.length}
@@ -399,7 +399,7 @@ export default function Prephub() {
                 onClick={() => handleGroupChange("dsa")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${activeGroup === "dsa"
                     ? "bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] text-white shadow-md shadow-red-500/20"
-                    : "text-neutral-400 hover:text-neutral-200"
+                    : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
                   }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
@@ -407,7 +407,7 @@ export default function Prephub() {
                 <span
                   className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${activeGroup === "dsa"
                       ? "bg-black/20 text-white"
-                      : "bg-neutral-800 text-neutral-400"
+                      : "bg-slate-200 text-slate-700 dark:bg-neutral-800 dark:text-neutral-400"
                     }`}
                 >
                   {dsaSubjects.length}
@@ -419,7 +419,7 @@ export default function Prephub() {
                 onClick={() => handleGroupChange("rk")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${activeGroup === "rk"
                     ? "bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] text-white shadow-md shadow-red-500/20"
-                    : "text-neutral-400 hover:text-neutral-200"
+                    : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
                   }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
@@ -431,7 +431,7 @@ export default function Prephub() {
                         e.stopPropagation();
                         setIsVerificationModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 transition cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-300 hover:bg-amber-500/25 transition cursor-pointer"
                       title="Verification In Review (Click to view)"
                     >
                       <span className="animate-pulse text-[10px]">⏳</span>
@@ -445,7 +445,7 @@ export default function Prephub() {
                       }}
                       className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full transition cursor-pointer ${activeGroup === "rk"
                           ? "bg-black/25 text-white/90 border border-white/10 hover:border-white/20"
-                          : "bg-neutral-900/80 border border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-300"
+                          : "bg-slate-200/90 dark:bg-neutral-900/80 border border-slate-300 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:border-slate-400 hover:text-slate-900 dark:hover:border-neutral-700 dark:hover:text-neutral-300"
                         }`}
                       title="Locked for RK Coaching students (Click to unlock)"
                     >
@@ -457,7 +457,7 @@ export default function Prephub() {
                   <span
                     className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full ${activeGroup === "rk"
                         ? "bg-black/25 text-white border border-white/10"
-                        : "bg-neutral-900/80 border border-neutral-800 text-neutral-400"
+                        : "bg-slate-200/90 dark:bg-neutral-900/80 border border-slate-300 dark:border-neutral-800 text-slate-600 dark:text-neutral-400"
                       }`}
                     title="Verified RK Coaching Scholar (Unlocked)"
                   >
@@ -475,7 +475,7 @@ export default function Prephub() {
                   type="button"
                   onClick={() => scrollCarousel("left")}
                   disabled={!canScrollLeft}
-                  className="w-8 h-8 rounded-xl bg-[#13101C] border border-[#262135] text-neutral-400 hover:text-white hover:border-red-500/40 flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+                  className="w-8 h-8 rounded-xl bg-white dark:bg-[#13101C] border border-slate-200 dark:border-[#262135] text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white hover:border-red-500/40 flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer shadow-xs"
                   title="Scroll Left"
                   aria-label="Previous roadmaps"
                 >
@@ -485,7 +485,7 @@ export default function Prephub() {
                   type="button"
                   onClick={() => scrollCarousel("right")}
                   disabled={!canScrollRight}
-                  className="w-8 h-8 rounded-xl bg-[#13101C] border border-[#262135] text-neutral-400 hover:text-white hover:border-red-500/40 flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+                  className="w-8 h-8 rounded-xl bg-white dark:bg-[#13101C] border border-slate-200 dark:border-[#262135] text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white hover:border-red-500/40 flex items-center justify-center transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer shadow-xs"
                   title="Scroll Right"
                   aria-label="Next roadmaps"
                 >
@@ -525,8 +525,8 @@ export default function Prephub() {
                   currentList.length <= 4 ? "w-[260px] sm:w-[275px] lg:w-auto" : "w-[260px] sm:w-[275px]"
                 } ${
                   isActive
-                    ? "bg-gradient-to-b from-[#181324] via-[#120F1D] to-[#0B0912] border border-red-500/70 shadow-[0_0_20px_rgba(224,77,77,0.18),0_8px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                    : "bg-gradient-to-b from-[#13101C]/80 via-[#0E0C16]/85 to-[#08070D]/90 border border-[#262135]/80 shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.02)] hover:border-neutral-700/80 hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)] hover:from-[#161320]"
+                    ? "bg-gradient-to-b from-red-50 via-rose-50/40 to-white dark:from-[#181324] dark:via-[#120F1D] dark:to-[#0B0912] border border-red-300 dark:border-red-500/70 shadow-[0_0_20px_rgba(224,77,77,0.12),0_8px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[0_0_20px_rgba(224,77,77,0.18),0_8px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                    : "bg-white dark:bg-gradient-to-b dark:from-[#13101C]/80 dark:via-[#0E0C16]/85 dark:to-[#08070D]/90 border border-slate-200 dark:border-[#262135]/80 shadow-xs dark:shadow-[0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.02)] hover:border-slate-300 dark:hover:border-neutral-700/80 hover:shadow-md dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
                 }`}
               >
                 <div className="relative z-10">
@@ -535,8 +535,8 @@ export default function Prephub() {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                         isActive
-                          ? "bg-red-500/15 border border-red-500/35 text-red-400"
-                          : "bg-[#14111E] border border-[#282236] text-neutral-400 group-hover:text-red-400 group-hover:border-red-500/30"
+                          ? "bg-red-500/15 border border-red-500/35 text-red-500 dark:text-red-400"
+                          : "bg-slate-100 dark:bg-[#14111E] border border-slate-200 dark:border-[#282236] text-slate-500 dark:text-neutral-400 group-hover:text-red-500 group-hover:border-red-400/40"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -547,8 +547,8 @@ export default function Prephub() {
                       <span
                         className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full transition-colors ${
                           isActive
-                            ? "bg-red-500/15 text-red-300 border border-red-500/30 font-semibold"
-                            : "bg-[#120F1A] text-neutral-400 border border-[#241F32] group-hover:border-neutral-700 group-hover:text-neutral-300"
+                            ? "bg-red-500/15 text-red-600 dark:text-red-300 border border-red-500/30 font-semibold"
+                            : "bg-slate-100 dark:bg-[#120F1A] text-slate-600 dark:text-neutral-400 border border-slate-200 dark:border-[#241F32] group-hover:border-slate-300 group-hover:text-slate-800 dark:group-hover:border-neutral-700 dark:group-hover:text-neutral-300"
                         }`}
                       >
                         {sub.topicsCount} topics
@@ -556,17 +556,17 @@ export default function Prephub() {
                     </div>
                   </div>
 
-                  <h3 className="text-sm font-semibold tracking-tight text-neutral-100 group-hover:text-white transition-colors truncate">
+                  <h3 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-neutral-100 group-hover:text-red-600 dark:group-hover:text-white transition-colors truncate">
                     {sub.title}
                   </h3>
-                  <p className="text-xs text-neutral-400 group-hover:text-neutral-300 transition-colors mt-1.5 line-clamp-2 leading-relaxed min-h-[36px]">
+                  <p className="text-xs text-slate-600 dark:text-neutral-400 group-hover:text-slate-800 dark:group-hover:text-neutral-300 transition-colors mt-1.5 line-clamp-2 leading-relaxed min-h-[36px]">
                     {sub.description}
                   </p>
                 </div>
 
-                <div className="relative z-10 mt-4 pt-3 border-t border-[#211D2D]/80 flex items-center justify-between text-xs">
-                  <span className="font-mono text-[11px] text-neutral-400 group-hover:text-neutral-300 transition-colors flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-neutral-500 group-hover:text-red-400/80 transition-colors" />
+                <div className="relative z-10 mt-4 pt-3 border-t border-slate-200 dark:border-[#211D2D]/80 flex items-center justify-between text-xs">
+                  <span className="font-mono text-[11px] text-slate-500 dark:text-neutral-400 group-hover:text-slate-700 dark:group-hover:text-neutral-300 transition-colors flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-500 group-hover:text-red-500 dark:group-hover:text-red-400/80 transition-colors" />
                     {sub.modulesCount} modules
                   </span>
                   {sub.group === "rk" && !user?.isRkStudent ? (
@@ -575,17 +575,17 @@ export default function Prephub() {
                         e.stopPropagation();
                         setIsVerificationModalOpen(true);
                       }}
-                      className="text-neutral-400 hover:text-white transition-colors flex items-center cursor-pointer"
+                      className="text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white transition-colors flex items-center cursor-pointer"
                       title="Locked for RK Coaching students (Click to unlock)"
                     >
                       <Lock className="w-3.5 h-3.5" strokeWidth={1.8} />
                     </span>
                   ) : isActive ? (
-                    <span className="text-red-400 font-semibold text-[11px] bg-red-500/10 px-2 py-0.5 rounded border border-red-500/25">
+                    <span className="text-red-500 dark:text-red-400 font-semibold text-[11px] bg-red-500/10 px-2 py-0.5 rounded border border-red-500/25">
                       Active
                     </span>
                   ) : (
-                    <span className="text-neutral-400 group-hover:text-red-400 font-medium text-[11px] flex items-center gap-1 transition-colors">
+                    <span className="text-slate-500 group-hover:text-red-600 dark:text-neutral-400 dark:group-hover:text-red-400 font-medium text-[11px] flex items-center gap-1 transition-colors">
                       Explore →
                     </span>
                   )}
@@ -596,21 +596,21 @@ export default function Prephub() {
         </section>
 
         {/* Detailed Syllabus Explorer */}
-        <section className="bg-gradient-to-b from-[#14111E]/85 via-[#0F0D17]/90 to-[#0A0910]/95 border border-[#282238]/80 rounded-2xl p-6 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)] space-y-5">
-          <div className="flex items-center justify-between border-b border-[#231F33]/80 pb-3">
+        <section className="bg-white dark:bg-gradient-to-b dark:from-[#14111E]/85 dark:via-[#0F0D17]/90 dark:to-[#0A0910]/95 border border-slate-200 dark:border-[#282238]/80 rounded-2xl p-6 backdrop-blur-md shadow-xs dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)] space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#231F33]/80 pb-3">
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-base font-bold text-neutral-100">
+                <h2 className="text-base font-bold text-slate-900 dark:text-neutral-100">
                   {subjectDetails?.title || currentSubject?.title || "Syllabus Details"}
                 </h2>
                 {currentSubject?.lastSyncedAt && (
-                  <span className="text-[10px] font-mono text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                     <span>Synced {new Date(currentSubject.lastSyncedAt).toLocaleDateString()}</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-neutral-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
                 {activeGroup === "core"
                   ? "Comprehensive curriculum extracted directly from core computer science university & interview syllabi."
                   : activeGroup === "dsa"
@@ -619,13 +619,13 @@ export default function Prephub() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-neutral-400 font-mono">
               <span>Total: {subjectDetails?.totalModules || 0} Modules, {subjectDetails?.totalItems || 0} Lessons</span>
               {user?.role === "admin" && !["os", "dbms", "cn", "sql", "strivers-180", "codeforces-ladder", "rk-classroom"].includes(activeSubjectId) && (
                 <button
                   type="button"
                   onClick={() => handleDeleteCard(activeSubjectId)}
-                  className="px-2 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-400 hover:text-white transition cursor-pointer flex items-center gap-1 font-sans text-xs"
+                  className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-950/40 dark:hover:bg-red-900/60 border border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-white transition cursor-pointer flex items-center gap-1 font-sans text-xs"
                   title="Admin: Delete this roadmap"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -637,15 +637,15 @@ export default function Prephub() {
 
           {/* Interactive Studio Practice Callout */}
           {isPracticeEligible && (
-            <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/40 via-[#171324] to-[#120F1C] border border-red-500/35 shadow-[0_0_24px_rgba(224,77,77,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50/50 to-orange-50/30 dark:from-red-950/40 dark:via-[#171324] dark:to-[#120F1C] border border-red-200 dark:border-red-500/35 shadow-xs dark:shadow-[0_0_24px_rgba(224,77,77,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="relative z-10">
-                <p className="text-xs sm:text-sm font-semibold text-neutral-100 flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+                <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-neutral-100 flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-500 dark:text-red-400 shrink-0">
                     <Code2 className="w-4 h-4" />
                   </span>
                   Practice {currentSubject?.title} in the Interactive Studio
                 </p>
-                <p className="text-xs text-neutral-400 mt-1 pl-9">
+                <p className="text-xs text-slate-600 dark:text-neutral-400 mt-1 pl-9">
                   Enroll this roadmap into your Practice Studio to explore 3-tier solutions, practice with 1-click judge forwarding, and track mastery.
                 </p>
               </div>
@@ -674,7 +674,7 @@ export default function Prephub() {
                 return (
                   <div
                     key={mod.moduleId || idx}
-                    className="border border-[#262035]/80 rounded-xl overflow-hidden bg-[#110E1A]/60 hover:border-[#352D4A] transition-all duration-200"
+                    className="border border-slate-200 dark:border-[#262035]/80 rounded-xl overflow-hidden bg-slate-50/70 dark:bg-[#110E1A]/60 hover:border-slate-300 dark:hover:border-[#352D4A] transition-all duration-200"
                   >
                     {/* Module Header Toggle */}
                     <div
@@ -682,28 +682,28 @@ export default function Prephub() {
                       tabIndex={0}
                       onClick={() => toggleModule(mod.moduleId)}
                       onKeyDown={(e) => e.key === "Enter" && toggleModule(mod.moduleId)}
-                      className="px-4 py-3 flex items-center justify-between hover:bg-neutral-800/40 transition cursor-pointer select-none"
+                      className="px-4 py-3 flex items-center justify-between hover:bg-slate-100/70 dark:hover:bg-neutral-800/40 transition cursor-pointer select-none"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800 flex items-center gap-1.5">
+                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-neutral-900 dark:text-neutral-300 border border-slate-300 dark:border-neutral-800 flex items-center gap-1.5">
                           {isCurrentLocked && (
-                            <Lock className="w-3 h-3 text-neutral-400 shrink-0" strokeWidth={1.8} />
+                            <Lock className="w-3 h-3 text-slate-500 dark:text-neutral-400 shrink-0" strokeWidth={1.8} />
                           )}
                           Module {idx + 1}
                         </span>
-                        <h3 className="text-xs sm:text-sm font-semibold text-neutral-200">
+                        <h3 className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-neutral-200">
                           {mod.moduleTitle}
                         </h3>
                       </div>
 
-                      <div className="flex items-center gap-3 text-neutral-400 text-xs">
+                      <div className="flex items-center gap-3 text-slate-500 dark:text-neutral-400 text-xs">
                         {isCurrentLocked && (
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
                               setIsVerificationModalOpen(true);
                             }}
-                            className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                            className="text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
                             title="Locked for RK Coaching students (Click to unlock)"
                           >
                             <Lock className="w-3.5 h-3.5" strokeWidth={1.8} />
@@ -711,16 +711,16 @@ export default function Prephub() {
                         )}
                         <span className="text-[11px] font-mono">{itemsCount} topics</span>
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-red-400" />
+                          <ChevronDown className="w-4 h-4 text-red-500 dark:text-red-400" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-neutral-400" />
+                          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-neutral-400" />
                         )}
                       </div>
                     </div>
 
                     {/* Topics Sub-list */}
                     {isExpanded && (
-                      <div className="px-4 pb-3 pt-1 border-t border-neutral-800/60 divide-y divide-neutral-800/40">
+                      <div className="px-4 pb-3 pt-1 border-t border-slate-200 dark:border-neutral-800/60 divide-y divide-slate-100 dark:divide-neutral-800/40">
                         {mod.items && mod.items.length > 0 ? (
                           mod.items.map((item) => {
                             const judgeUrl = item.platformUrl || item.leetcodeUrl;
@@ -729,20 +729,20 @@ export default function Prephub() {
                             return (
                               <div
                                 key={item.id}
-                                className="py-2.5 flex items-center justify-between text-xs hover:bg-neutral-800/30 px-2 rounded-lg transition gap-2"
+                                className="py-2.5 flex items-center justify-between text-xs hover:bg-slate-100/60 dark:hover:bg-neutral-800/30 px-2 rounded-lg transition gap-2"
                               >
                                 <div className="flex items-center gap-2 min-w-0">
                                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                                  <span className="text-neutral-200 font-medium truncate">
+                                  <span className="text-slate-800 dark:text-neutral-200 font-medium truncate">
                                     {item.title}
                                   </span>
                                   {item.leetcodeDifficulty && (
                                     <span
                                       className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-full border shrink-0 ${item.leetcodeDifficulty === "Easy"
-                                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                                           : item.leetcodeDifficulty === "Hard"
-                                            ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
-                                            : "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
                                         }`}
                                     >
                                       {item.leetcodeDifficulty}
@@ -758,10 +758,10 @@ export default function Prephub() {
                                       target={!isCurrentLocked ? "_blank" : "_self"}
                                       rel="noreferrer"
                                       onClick={handleTopicAction}
-                                      className="text-neutral-400 hover:text-white transition flex items-center gap-1 text-[11px]"
+                                      className="text-slate-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition flex items-center gap-1 text-[11px]"
                                       title={!isCurrentLocked ? `Open problem on ${judgeName}` : "Locked for RK Coaching students"}
                                     >
-                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-neutral-400 shrink-0" strokeWidth={1.8} />}
+                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-neutral-400 shrink-0" strokeWidth={1.8} />}
                                       <span>{judgeName}</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
@@ -774,10 +774,10 @@ export default function Prephub() {
                                       target={!isCurrentLocked ? "_blank" : "_self"}
                                       rel="noreferrer"
                                       onClick={handleTopicAction}
-                                      className="text-neutral-400 hover:text-red-400 transition flex items-center gap-1 text-[11px]"
+                                      className="text-slate-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition flex items-center gap-1 text-[11px]"
                                       title={!isCurrentLocked ? "Open on TUF" : "Locked for RK Coaching students"}
                                     >
-                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-neutral-400 shrink-0" strokeWidth={1.8} />}
+                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-neutral-400 shrink-0" strokeWidth={1.8} />}
                                       <span>TUF</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
@@ -790,10 +790,10 @@ export default function Prephub() {
                                       target={!isCurrentLocked ? "_blank" : "_self"}
                                       rel="noreferrer"
                                       onClick={handleTopicAction}
-                                      className="text-neutral-400 hover:text-red-400 transition flex items-center gap-1 text-[11px]"
+                                      className="text-slate-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition flex items-center gap-1 text-[11px]"
                                       title={!isCurrentLocked ? "View lesson" : "Locked for RK Coaching students"}
                                     >
-                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-neutral-400 shrink-0" strokeWidth={1.8} />}
+                                      {isCurrentLocked && <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-neutral-400 shrink-0" strokeWidth={1.8} />}
                                       <span>View Lesson</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
@@ -803,7 +803,7 @@ export default function Prephub() {
                             );
                           })
                         ) : (
-                          <p className="py-2 text-xs text-neutral-500">
+                          <p className="py-2 text-xs text-slate-400 dark:text-neutral-500">
                             No topics listed for this module.
                           </p>
                         )}
@@ -814,14 +814,14 @@ export default function Prephub() {
               })}
             </div>
           ) : (
-            <div className="py-16 px-6 text-center rounded-xl border border-dashed border-neutral-800 bg-[#0E0C16]/50">
-              <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 mx-auto flex items-center justify-center mb-3">
+            <div className="py-16 px-6 text-center rounded-xl border border-dashed border-slate-300 dark:border-neutral-800 bg-slate-50/70 dark:bg-[#0E0C16]/50">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 mx-auto flex items-center justify-center mb-3">
                 <GraduationCap className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-semibold text-neutral-200">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-neutral-200">
                 {activeGroup === "rk" ? "RK Workspace Playlists & Courses" : "No Content Available"}
               </h3>
-              <p className="text-xs text-neutral-400 mt-1.5 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1.5 max-w-md mx-auto leading-relaxed">
                 {activeGroup === "rk"
                   ? "YouTube playlists, classroom lectures, and learning roadmaps published by developer/admin will be displayed here."
                   : "No syllabus topics found for this selection."}
@@ -846,15 +846,13 @@ export default function Prephub() {
           />
         )}
 
-        {/* Admin Upload Roadmap Modal */}
-        {user?.role === "admin" && (
-          <CustomImportModal
-            isOpen={isUploadModalOpen}
-            onClose={() => setIsUploadModalOpen(false)}
-            onSuccess={handleUploadSuccess}
-            isAdmin={true}
-          />
-        )}
+        {/* Upload / Import Roadmap Modal */}
+        <CustomImportModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onSuccess={handleUploadSuccess}
+          isAdmin={user?.role === "admin"}
+        />
       </div>
     </AppShell>
   );

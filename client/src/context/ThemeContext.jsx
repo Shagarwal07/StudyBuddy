@@ -4,27 +4,56 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem("studybuddy_theme");
-    if (savedTheme === "light" || savedTheme === "dark") {
-      return savedTheme;
-    }
-    return "dark"; // Default theme
+    try {
+      const savedTheme = localStorage.getItem("studybuddy_theme");
+      if (savedTheme === "web") return "dark"; // migrated to dark theme + web skin
+      if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+    } catch {}
+    return "dark"; // Default theme remains dark
+  });
+
+  const [skin, setSkin] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem("studybuddy_theme");
+      const savedSkin = localStorage.getItem("studybuddy_skin");
+      if (savedTheme === "web") return "web"; // migrated legacy setting
+      if (savedSkin === "web" || savedSkin === "basic") return savedSkin;
+    } catch {}
+    return "basic"; // Default skin is basic
+  });
+
+  const [animatedBg, setAnimatedBg] = useState(() => {
+    try {
+      const saved = localStorage.getItem("studybuddy_animated_bg");
+      if (saved !== null) return saved === "true";
+    } catch {}
+    return true; // Default animated background is On
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.add("light");
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("studybuddy_theme", theme);
-  }, [theme]);
+    root.classList.remove("light", "dark", "theme-web");
+    root.classList.add(theme);
+    root.setAttribute("data-theme", theme);
+    root.setAttribute("data-skin", skin);
+
+    try {
+      localStorage.setItem("studybuddy_theme", theme);
+      localStorage.setItem("studybuddy_skin", skin);
+      localStorage.setItem("studybuddy_animated_bg", String(animatedBg));
+    } catch {}
+  }, [theme, skin, animatedBg]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  const toggleSkin = () => {
+    setSkin((prev) => (prev === "web" ? "basic" : "web"));
+  };
+
+  const toggleAnimatedBg = () => {
+    setAnimatedBg((prev) => !prev);
   };
 
   const value = useMemo(
@@ -32,9 +61,16 @@ export function ThemeProvider({ children }) {
       theme,
       setTheme,
       toggleTheme,
+      skin,
+      setSkin,
+      toggleSkin,
+      animatedBg,
+      setAnimatedBg,
+      toggleAnimatedBg,
       isDark: theme === "dark",
+      isWeb: skin === "web",
     }),
-    [theme],
+    [theme, skin, animatedBg],
   );
 
   return (

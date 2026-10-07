@@ -51,16 +51,16 @@ export default function CreatePlaylistModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-black/60 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-playlist-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-neutral-800 bg-[#121214] p-6 shadow-2xl">
-        <h2 id="create-playlist-title" className="text-lg font-bold text-neutral-100">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#121214] p-6 shadow-2xl text-slate-900 dark:text-neutral-100">
+        <h2 id="create-playlist-title" className="text-lg font-bold text-slate-900 dark:text-neutral-100">
           Import Playlist or Video
         </h2>
-        <p className="text-xs text-neutral-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
           Paste a YouTube playlist or single video URL. (Shorts not supported)
         </p>
 
@@ -75,15 +75,15 @@ export default function CreatePlaylistModal({
               handleImport();
             }
           }}
-          className={`mt-4 w-full rounded-xl border bg-[#0E0E12] px-4 py-2.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 outline-none transition-colors font-mono ${
+          className={`mt-4 w-full rounded-xl border bg-slate-50 dark:bg-[#0E0E12] px-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-neutral-100 placeholder-slate-400 dark:placeholder-neutral-500 outline-none transition-colors font-mono ${
             isShorts
               ? "border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
-              : "border-neutral-800 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
+              : "border-slate-200 dark:border-neutral-800 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
           }`}
         />
 
         {isShorts && (
-          <p className="text-[11px] text-red-400 mt-2 flex items-center gap-1.5 font-medium">
+          <p className="text-[11px] text-red-500 dark:text-red-400 mt-2 flex items-center gap-1.5 font-medium">
             <span>⚠️ YouTube Shorts are not supported. Please paste a full video or playlist link.</span>
           </p>
         )}
@@ -97,7 +97,7 @@ export default function CreatePlaylistModal({
                 onClose();
               }
             }}
-            className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2 text-xs sm:text-sm font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            className="rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-neutral-300 transition-colors hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
           >
             Cancel
           </button>
