@@ -1,0 +1,17 @@
+# StudyBuddy robots.txt (Accurate & Secure)
+User-agent: *
+
+# 1. Allow Public Landing & Auth Pages
+Allow: /$
+Allow: /login
+Allow: /signup
+
+# 2. Disallow All Protected App Workspaces (Login Required)
+Disallow: /dashboard
+Disallow: /practice
+Disallow: /youtube
+Disallow: /library
+Disallow: /prephub
+Disallow: /playlist/
+Disallow: /settings
+Disallow: /api/
