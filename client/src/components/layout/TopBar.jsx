@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Menu,
   ArrowLeft,
   Sun,
   Moon,
@@ -95,7 +94,7 @@ function StreakFlameIcon({ active = false, isWeb = false }) {
 export default function TopBar({ title, showBack = false, onMenuClick }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDark, isWeb, toggleTheme } = useTheme();
+  const { isDark, isWeb, toggleTheme, toggleSkin } = useTheme();
   const { user, streak, logout, isAuthenticated } = useAuth();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -167,7 +166,12 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
     }
   };
 
-  const displayStreak = streak?.currentStreak ?? 0;
+  const displayStreak =
+    typeof streak === "number"
+      ? streak
+      : typeof streak?.currentStreak === "number"
+      ? streak.currentStreak
+      : Number(streak) || 0;
   const displayBadge =
     user?.badge && user.badge !== "Basic User" ? user.badge : null;
 
@@ -510,24 +514,36 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     </span>
                   </button>
 
-                  {/* Navigation Sidebar Drawer */}
-                  {onMenuClick && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        onMenuClick();
-                      }}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-left cursor-pointer transition ${
+                  {/* Skin Mode Toggle Row */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleSkin();
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-2 text-left cursor-pointer transition ${
+                      isWeb
+                        ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]"
+                        : "rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm leading-none opacity-80 select-none">
+                        🕸️
+                      </span>
+                      <span className="text-xs font-medium">
+                        {isWeb ? "Switch to Basic Skin" : "Switch to Web Skin"}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.5 border ${
                         isWeb
-                          ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]"
-                          : "rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800/60"
+                          ? "bg-[var(--surface-hover,#26111a)] border-[var(--border-subtle,rgba(241,232,218,0.18))] text-[var(--bone,#f1e8da)]"
+                          : "rounded text-slate-600 bg-slate-100 border-slate-200 dark:text-neutral-400 dark:bg-neutral-900 dark:border-neutral-800"
                       }`}
                     >
-                      <Menu className="w-3.5 h-3.5 text-[var(--crimson-hover,#e5484d)]" />
-                      <span className="text-xs font-medium">Open Full Sidebar</span>
-                    </button>
-                  )}
+                      {isWeb ? "Web" : "Basic"}
+                    </span>
+                  </button>
 
                   <div
                     className={`h-[1px] my-1 ${

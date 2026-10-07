@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { ListMusic, Code2, Flame, Clock, ArrowRight, Play, Plus, Sparkles } from "lucide-react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import AppShell from "../components/layout/AppShell";
+import AppShell, { SidebarTrigger } from "../components/layout/AppShell";
 import Loader from "../components/common/Loader";
 import CreatePlaylistModal from "../components/modals/CreatePlaylistModal";
 import useImportPlaylist from "../hooks/useImportPlaylist";
@@ -16,7 +16,7 @@ import StrandDivider from "../components/web/StrandDivider";
 import AnimatedStatNumber from "../components/web/AnimatedStatNumber";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, setStreak } = useAuth();
   const { isWeb } = useTheme();
   const [dashboardData, setDashboardData] = useState(null);
   const [streakData, setStreakData] = useState(null);
@@ -44,6 +44,9 @@ export default function Dashboard() {
 
       if (streakRes.status === "fulfilled") {
         setStreakData(streakRes.value.data);
+        if (typeof streakRes.value.data?.currentStreak === "number") {
+          setStreak?.(streakRes.value.data.currentStreak);
+        }
       }
 
       if (
@@ -192,16 +195,18 @@ export default function Dashboard() {
       <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-12 space-y-6">
         {/* Dynamic Welcome Header */}
         <section className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-0.5">
-            <p
-              className={`text-xs sm:text-sm font-medium tracking-wide ${
-                isWeb
-                  ? "font-mono uppercase tracking-[0.08em] text-[var(--bone-muted,#b9a29b)]"
-                  : "text-neutral-400"
-              }`}
-            >
-              {greeting},
-            </p>
+          <div className="flex items-center gap-3">
+            <SidebarTrigger />
+            <div className="space-y-0.5">
+              <p
+                className={`text-xs sm:text-sm font-medium tracking-wide ${
+                  isWeb
+                    ? "font-mono uppercase tracking-[0.08em] text-[var(--bone-muted,#b9a29b)]"
+                    : "text-neutral-400"
+                }`}
+              >
+                {greeting},
+              </p>
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">
               {isWeb ? (
                 <span className="text-[var(--crimson-hover)] font-semibold">
@@ -213,6 +218,7 @@ export default function Dashboard() {
                 </span>
               )}
             </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

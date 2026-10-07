@@ -103,8 +103,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
       {/* Drawer */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 w-64 flex flex-col justify-between p-5 border-l border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-[#030005]/95 backdrop-blur-xl transition-transform duration-200 ease-out shadow-2xl ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col justify-between p-5 border-r border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-[#030005]/95 backdrop-blur-xl transition-transform duration-200 ease-out shadow-2xl ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="space-y-6">
