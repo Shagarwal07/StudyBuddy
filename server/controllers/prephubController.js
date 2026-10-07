@@ -220,6 +220,38 @@ exports.getOverview = async (req, res) => {
   }
 };
 
+function buildModulesFromProblems(problems = []) {
+  const moduleMap = new Map();
+  problems.forEach((p, idx) => {
+    const modName = p.module || inferProblemCategory(p.title, p.module) || "Core Patterns";
+    if (!moduleMap.has(modName)) {
+      moduleMap.set(modName, []);
+    }
+    const judgeLink = p.platformUrl || p.leetcodeUrl || p.questionUrl || "";
+    const solLink = p.solutionUrl || p.instructorUrl || "";
+    moduleMap.get(modName).push({
+      id: p.id || idx + 1,
+      number: p.number || String(idx + 1),
+      title: p.title,
+      module: modName,
+      platform: p.platform || (judgeLink.includes("codeforces.com") ? "Codeforces" : "LeetCode"),
+      platformUrl: judgeLink || solLink,
+      leetcodeUrl: p.leetcodeUrl || (judgeLink.includes("leetcode.com") ? judgeLink : ""),
+      solutionUrl: solLink,
+      leetcodeDifficulty: p.leetcodeDifficulty || "Medium",
+      hasNotes: Boolean(p.hasNotes),
+    });
+  });
+
+  const rawModules = Array.from(moduleMap.entries()).map(([moduleTitle, items], mIdx) => ({
+    moduleId: `mod-${mIdx + 1}`,
+    moduleTitle,
+    items,
+  }));
+
+  return sortModulesByPedagogy(rawModules);
+}
+
 /**
  * GET /api/prephub/subject/:subjectId
  * Detailed module and topic syllabus for a core subject or DSA sheet
@@ -248,18 +280,19 @@ exports.getSubjectDetails = async (req, res) => {
 
     // 2. Core CS / SQL: sql or sql-75
     if (lowerId === "sql" || lowerId === "sql-75") {
-      const data = cache.sql;
-      if (!data) return res.status(404).json({ success: false, message: "SQL syllabus data unavailable" });
       const globalSheet = await GlobalSheet.findOne({ id: "sql-75" }).lean().catch(() => null);
+      const data = cache.sql;
+      if (!data && !globalSheet) return res.status(404).json({ success: false, message: "SQL syllabus data unavailable" });
+      const modules = (data?.modules?.length ? data.modules : null) || buildModulesFromProblems(globalSheet?.problems || []);
       return res.json({
         success: true,
         subjectId: "sql",
         group: "core",
         sheetId: "sql-75",
-        title: data.sheetName || "SQL Interview 75",
-        totalModules: data.totalModules,
-        totalItems: globalSheet?.problems?.length || data.totalItems || 75,
-        modules: data.modules,
+        title: globalSheet?.title || data?.sheetName || "SQL Interview 75",
+        totalModules: modules.length,
+        totalItems: globalSheet?.problems?.length || data?.totalItems || 75,
+        modules,
         uploadedBy: "Developer / Admin",
         isOfficial: true,
         sourceUrl: globalSheet?.sourceUrl || "",
@@ -273,7 +306,7 @@ exports.getSubjectDetails = async (req, res) => {
       const data = cache.tuf180;
       if (!data && !globalSheet) return res.status(404).json({ success: false, message: "Sheet data unavailable" });
 
-      const modules = data?.modules || [];
+      const modules = (data?.modules?.length ? data.modules : null) || buildModulesFromProblems(globalSheet?.problems || []);
       const totalItems = globalSheet?.problems?.length || data?.totalItems || 179;
 
       return res.json({
@@ -295,58 +328,32 @@ exports.getSubjectDetails = async (req, res) => {
     // 3.5 Codeforces Ladder
     if (lowerId === "codeforces-ladder") {
       const globalSheet = await GlobalSheet.findOne({ id: "codeforces-ladder" }).lean().catch(() => null);
-      const ladderData = cache.cfLadder || globalSheet;
-      if (ladderData) {
-        return res.json({
-          success: true,
-          subjectId: "codeforces-ladder",
-          group: "dsa",
-          sheetId: "codeforces-ladder",
-          title: globalSheet?.title || ladderData.title || "Codeforces Ladder",
-          totalModules: ladderData.modules?.length || ladderData.totalModules || 8,
-          totalItems: globalSheet?.problems?.length || ladderData.totalItems || 269,
-          modules: ladderData.modules || [],
-          uploadedBy: "Developer / Admin",
-          isOfficial: true,
-          sourceUrl: globalSheet?.sourceUrl || ladderData.sourceUrl || "https://codeforces.com/problemset",
-          lastSyncedAt: globalSheet?.lastSyncedAt || ladderData.lastSyncedAt || null,
-        });
-      }
+      const ladderData = cache.cfLadder;
+      if (!ladderData && !globalSheet) return res.status(404).json({ success: false, message: "Ladder data unavailable" });
+
+      const modules = (ladderData?.modules?.length ? ladderData.modules : null) || buildModulesFromProblems(globalSheet?.problems || []);
+      const totalItems = globalSheet?.problems?.length || ladderData?.totalItems || 269;
+
+      return res.json({
+        success: true,
+        subjectId: "codeforces-ladder",
+        group: "dsa",
+        sheetId: "codeforces-ladder",
+        title: globalSheet?.title || ladderData?.title || "Codeforces Ladder",
+        totalModules: modules.length,
+        totalItems,
+        modules,
+        uploadedBy: "Developer / Admin",
+        isOfficial: true,
+        sourceUrl: globalSheet?.sourceUrl || ladderData?.sourceUrl || "https://codeforces.com/problemset",
+        lastSyncedAt: globalSheet?.lastSyncedAt || ladderData?.lastSyncedAt || null,
+      });
     }
 
     // 4. Check dynamic GlobalSheet created by developer / admin
     const globalSheet = await GlobalSheet.findOne({ id: lowerId }).lean().catch(() => null);
     if (globalSheet) {
-      const moduleMap = new Map();
-      (globalSheet.problems || []).forEach((p, idx) => {
-        const modName = inferProblemCategory(p.title, p.module);
-        if (!moduleMap.has(modName)) {
-          moduleMap.set(modName, []);
-        }
-        const judgeLink = p.platformUrl || p.leetcodeUrl || p.questionUrl || "";
-        const solLink = p.solutionUrl || p.instructorUrl || "";
-        moduleMap.get(modName).push({
-          id: p.id || idx + 1,
-          number: p.number || String(idx + 1),
-          title: p.title,
-          module: modName,
-          platform: p.platform || (judgeLink.includes("codeforces.com") ? "Codeforces" : "LeetCode"),
-          platformUrl: judgeLink || solLink,
-          leetcodeUrl: p.leetcodeUrl || (judgeLink.includes("leetcode.com") ? judgeLink : ""),
-          solutionUrl: solLink,
-          leetcodeDifficulty: p.leetcodeDifficulty || "Medium",
-          hasNotes: Boolean(p.hasNotes),
-        });
-      });
-
-      const rawModules = Array.from(moduleMap.entries()).map(([moduleTitle, items], mIdx) => ({
-        moduleId: `global-mod-${mIdx + 1}`,
-        moduleTitle,
-        items,
-      }));
-
-      const modules = sortModulesByPedagogy(rawModules);
-
+      const modules = buildModulesFromProblems(globalSheet.problems || []);
       const isRk = globalSheet.group === "rk" || globalSheet.category?.toLowerCase().includes("rk") || lowerId.startsWith("rk-");
       const isCore = globalSheet.group === "core" || globalSheet.category?.toLowerCase().includes("core");
       const resolvedGroup = isRk ? "rk" : isCore ? "core" : "dsa";
