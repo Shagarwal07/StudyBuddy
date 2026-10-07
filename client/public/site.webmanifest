@@ -1,0 +1,45 @@
+{
+  "name": "StudyBuddy — Developer Learning & Practice Hub",
+  "short_name": "StudyBuddy",
+  "description": "All-in-one developer workspace: 4,500+ curated DSA problems (Striver SDE 180, NeetCode 150), distraction-free YouTube course hub with timestamped notes, and real-time LeetCode sync.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030005",
+  "theme_color": "#030005",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["education", "developer tools", "productivity"]
+}

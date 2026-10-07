@@ -12,7 +12,7 @@
     />
     <meta
       name="description"
-      content="StudyBuddy is the all-in-one developer learning ecosystem: 4,179+ curated DSA problems (Striver SDE 180, Striver A2Z, NeetCode 150, Codeforces Ladders), ad-free YouTube course hub with timestamped notes, in-browser code compiler, and real-time LeetCode & Codeforces sync extension."
+      content="StudyBuddy is the all-in-one developer learning ecosystem: 4,500+ curated DSA problems (Striver SDE 180, Striver A2Z, NeetCode 150, Codeforces Ladders), ad-free YouTube course hub with timestamped notes, in-browser code compiler, and real-time LeetCode & Codeforces sync extension."
     />
     <meta
       name="keywords"
@@ -106,7 +106,7 @@
             "applicationCategory": "EducationalApplication",
             "operatingSystem": "All",
             "browserRequirements": "Requires JavaScript. Requires HTML5.",
-            "description": "All-in-one developer learning ecosystem: 4,179+ curated DSA problems (Striver SDE 180, Striver A2Z, NeetCode 150), ad-free YouTube playlist workspace with timestamped notes, and companion browser extension for real-time LeetCode and Codeforces synchronization.",
+            "description": "All-in-one developer learning ecosystem: 4,500+ curated DSA problems (Striver SDE 180, Striver A2Z, NeetCode 150, Codeforces Ladder), ad-free YouTube playlist workspace with timestamped notes, and companion browser extension for real-time LeetCode and Codeforces synchronization.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -131,6 +131,8 @@
           }
         ]
       }
+    </script>
+
     <!-- Pre-paint Theme & Skin Init (Prevents FOUC & Migrates Legacy Storage) -->
     <script>
       (function() {
@@ -145,12 +147,12 @@
             localStorage.setItem("studybuddy_theme", "dark");
             localStorage.setItem("studybuddy_skin", "web");
           } else if (!savedSkin) {
-            savedSkin = "basic";
-            localStorage.setItem("studybuddy_skin", "basic");
+            savedSkin = "web";
+            localStorage.setItem("studybuddy_skin", "web");
           }
 
           var theme = savedTheme === "light" ? "light" : "dark";
-          var skin = savedSkin === "web" ? "web" : "basic";
+          var skin = savedSkin === "basic" ? "basic" : "web";
 
           var root = document.documentElement;
           root.classList.remove("light", "dark", "theme-web");

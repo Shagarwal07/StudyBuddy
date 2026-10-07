@@ -1,0 +1,15 @@
+# StudyBuddy robots.txt
+User-agent: *
+Allow: /
+Allow: /practice
+Allow: /youtube
+Allow: /prephub
+Allow: /login
+Allow: /signup
+
+# Disallow private user data and internal app state
+Disallow: /api/
+Disallow: /settings
+Disallow: /dashboard
+
+Sitemap: https://studybuddy.rk-coachings20.workers.dev/sitemap.xml
