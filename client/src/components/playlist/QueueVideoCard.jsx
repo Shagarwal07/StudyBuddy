@@ -1,82 +1,111 @@
 import { memo } from "react";
-import { FileText } from "lucide-react";
+import { Check, Play, FileText } from "lucide-react";
+import formatDuration from "../../utils/formatDuration";
 
 const QueueVideoCard = memo(
   ({ video, index, isActive, onVideoSelect, onNotesClick }) => {
+    const isCompleted = Boolean(video.completed);
+    const hasNotes = Boolean(video.notes?.trim());
+
     return (
       <div
         onClick={() => onVideoSelect(video._id)}
-        className={`rounded-lg p-2 cursor-pointer border transition-all duration-150 flex gap-3 group ${
+        role="button"
+        tabIndex={0}
+        aria-label={`Select lesson ${index + 1}: ${video.title}`}
+        onKeyDown={(e) => {
+          if (["Enter", " "].includes(e.key)) {
+            e.preventDefault();
+            onVideoSelect(video._id);
+          }
+        }}
+        className={`rounded-xl p-2.5 cursor-pointer border transition-all duration-150 flex items-center gap-3 group select-none ${
           isActive
-            ? "bg-red-500/10 border-red-500/30"
-            : "bg-transparent hover:bg-neutral-900/60 border-transparent hover:border-neutral-800/50"
+            ? "bg-red-500/10 border-red-500/35 dark:bg-red-500/[0.08] dark:border-red-500/30 shadow-xs"
+            : isCompleted
+            ? "bg-transparent hover:bg-slate-100/70 dark:hover:bg-neutral-900/60 border-transparent hover:border-slate-200 dark:hover:border-neutral-800 opacity-80 hover:opacity-100"
+            : "bg-transparent hover:bg-slate-100/70 dark:hover:bg-neutral-900/60 border-transparent hover:border-slate-200 dark:hover:border-neutral-800"
         }`}
       >
-        <div className="relative shrink-0">
+        {/* Index / Status Icon */}
+        <div className="shrink-0 w-6 flex items-center justify-center">
+          {isCompleted ? (
+            <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+              <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400 stroke-[3]" />
+            </div>
+          ) : isActive ? (
+            <div className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-xs">
+              <Play className="w-2.5 h-2.5 fill-white ml-0.5" />
+            </div>
+          ) : (
+            <span className="font-mono text-xs text-slate-400 dark:text-neutral-500 group-hover:text-slate-600 dark:group-hover:text-neutral-300">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          )}
+        </div>
+
+        {/* Thumbnail */}
+        <div className="relative shrink-0 w-20 sm:w-24 aspect-video rounded-lg overflow-hidden bg-neutral-950 border border-slate-200 dark:border-neutral-800">
           <img
             src={video.thumbnailUrl}
             alt={video.title}
-            className="w-[100px] aspect-video rounded-md object-cover bg-neutral-900 block"
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
             loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src =
+                "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=500&auto=format&fit=crop&q=60";
+            }}
           />
-          <div
-            className={`absolute bottom-1 right-1 px-1 py-0.5 rounded text-[9px] font-mono ${
-              isActive
-                ? "bg-red-600 text-white"
-                : "bg-black/80 text-neutral-300"
-            }`}
-          >
-            {index + 1}
-          </div>
+
+          {/* Progress Bar */}
+          {video.progressPercent > 0 && !isCompleted && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/70">
+              <div
+                className="h-full bg-red-500"
+                style={{ width: `${video.progressPercent}%` }}
+              />
+            </div>
+          )}
         </div>
 
-        <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5 gap-2">
-          <div className="flex items-start justify-between gap-2">
+        {/* Info Column */}
+        <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+          <div className="flex items-start justify-between gap-1.5">
             <p
               className={`text-xs font-medium line-clamp-2 leading-snug flex-1 ${
                 isActive
-                  ? "text-red-300"
-                  : "text-neutral-200 group-hover:text-white"
+                  ? "text-red-600 dark:text-red-300 font-semibold"
+                  : isCompleted
+                  ? "text-slate-500 dark:text-neutral-400"
+                  : "text-slate-800 dark:text-neutral-200 group-hover:text-slate-900 dark:group-hover:text-white"
               }`}
             >
               {video.title}
             </p>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNotesClick(video);
-              }}
-              className={`p-1 rounded-md transition shrink-0 ${
-                video.notes?.trim()
-                  ? "bg-red-500/15 text-red-400"
-                  : "text-neutral-500 hover:text-red-400 hover:bg-neutral-800"
-              }`}
-            >
-              <FileText className="w-3 h-3" />
-            </button>
+            {hasNotes && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNotesClick(video);
+                }}
+                className="p-1 rounded-md text-amber-500 hover:bg-amber-500/10 shrink-0"
+                title="View notes"
+              >
+                <FileText className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
-          <div className="space-y-1">
-            {video.progressPercent > 0 && (
-              <div className="h-0.5 w-full bg-neutral-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-red-500 rounded-full"
-                  style={{ width: `${video.progressPercent}%` }}
-                />
-              </div>
+          <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-neutral-500 font-mono mt-1">
+            <span>{formatDuration(video.durationInSeconds)}</span>
+            {isActive && (
+              <span className="text-red-500 font-semibold tracking-wider uppercase text-[9px]">
+                Playing
+              </span>
             )}
-
-            <div className="flex items-center justify-between text-[10px] text-neutral-500 font-mono">
-              {video.progressPercent > 0 && (
-                <span className="text-red-400/80">
-                  {video.progressPercent === 100
-                    ? "Done"
-                    : `${video.progressPercent}%`}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </div>
