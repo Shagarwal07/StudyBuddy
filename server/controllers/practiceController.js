@@ -4,6 +4,7 @@ const axios = require("axios");
 const User = require("../models/User");
 const UserCodingProgress = require("../models/UserCodingProgress");
 const GlobalSheet = require("../models/GlobalSheet");
+const ProblemSolution = require("../models/ProblemSolution");
 const DailyActivity = require("../models/DailyActivity");
 const { getLocalDateString } = require("../utils/dateUtils");
 const geminiSheetService = require("../services/geminiSheetService");
@@ -12,7 +13,6 @@ const { inferProblemCategory, sortModulesByPedagogy } = require("../utils/dsaCat
 
 // In-memory fast dataset maps & metadata
 let tuf180Data = null;
-let tuf180Total = 0;
 let sql75Data = null;
 const catalogMap = new Map();
 const leetcodeSolutionsMap = new Map();
@@ -325,7 +325,6 @@ function loadData() {
       if (fs.existsSync(tufPath)) {
         tuf180Data = JSON.parse(fs.readFileSync(tufPath, "utf8"));
         const items = tuf180Data.modules ? tuf180Data.modules.flatMap((m) => m.items || []) : [];
-        tuf180Total = items.length || 179;
         items.forEach((it) => {
           tufItemMap.set(normalize(it.title), it);
           if (it.leetcodeSlug) tufItemMap.set(normalize(it.leetcodeSlug), it);
@@ -1340,6 +1339,15 @@ exports.getSheetDetails = async (req, res) => {
   }
 };
 
+function formatComplexity(val) {
+  if (!val) return "O(N)";
+  if (typeof val === "string") return val;
+  if (typeof val === "object") {
+    return val.worst || val.average || val.best || val.total || val.auxiliary || val.note || "O(N)";
+  }
+  return String(val);
+}
+
 function formatLeetCodeCode(code, lang, canonicalMethodName) {
   if (!code || typeof code !== "string") return code;
   let res = code.trim().replace(/(?:public\s+)?class\s+Main\b/g, "class Solution");
@@ -1381,44 +1389,97 @@ exports.getProblemSolution = async (req, res) => {
     const { problemKey } = req.params;
     const querySlug = req.query.slug || "";
     const queryId = req.query.id || "";
+    const queryTufHref = req.query.tufHref || "";
+
+    const cleanKey = cleanProblemTitle(problemKey);
     const normKey = normalize(problemKey);
+    const normClean = normalize(cleanKey);
 
     let resolvedSlug = querySlug ? String(querySlug).toLowerCase().trim() : "";
     if (!resolvedSlug && problemKey.includes("-")) {
       resolvedSlug = problemKey.toLowerCase().trim();
     }
 
+    // 1. Primary source of truth: MongoDB Atlas ProblemSolution (works in production without local files)
+    const orFilters = [{ aliases: normClean }, { aliases: normKey }];
+    if (resolvedSlug) {
+      orFilters.push({ slug: resolvedSlug });
+      orFilters.push({ aliases: resolvedSlug });
+    }
+    if (queryId) {
+      orFilters.push({ aliases: normalize(queryId) });
+      orFilters.push({ aliases: String(queryId).toLowerCase().trim() });
+    }
+
+    const dbSol = await ProblemSolution.findOne({ $or: orFilters }).lean().catch(() => null);
+    if (dbSol && (dbSol.approaches?.length || dbSol.defaultCode)) {
+      return res.json({
+        success: true,
+        hasNotes: true,
+        title: dbSol.title || cleanKey || problemKey,
+        platform: dbSol.platform || "LeetCode",
+        platformUrl: dbSol.platformUrl || "",
+        problemStatement: dbSol.problemStatement || `Solve the problem: "${dbSol.title}".`,
+        constraints: dbSol.constraints || [],
+        examples: dbSol.examples || "",
+        testCases: dbSol.testCases || [],
+        approaches: dbSol.approaches || [],
+        leetcodeSolution: null,
+        defaultCode: dbSol.defaultCode || dbSol.approaches?.[0]?.code || "",
+      });
+    }
+
+    loadData();
+
+    const matchedDbItem = findProblemInDatabase(cleanKey, problemKey);
+
     const catItem =
       (resolvedSlug ? catalogMap.get(normalize(resolvedSlug)) : null) ||
+      catalogMap.get(normClean) ||
       catalogMap.get(normKey) ||
+      (matchedDbItem ? catalogMap.get(normalize(matchedDbItem.title)) : null) ||
       (queryId ? catalogMap.get(String(queryId)) : null);
 
     if (!resolvedSlug && catItem?.slug) resolvedSlug = catItem.slug;
+    if (!resolvedSlug && matchedDbItem?.slug) resolvedSlug = matchedDbItem.slug;
+    if (!resolvedSlug && matchedDbItem?.leetcodeSlug) resolvedSlug = matchedDbItem.leetcodeSlug;
 
     const tufItem =
+      tufItemMap.get(normClean) ||
       tufItemMap.get(normKey) ||
       (resolvedSlug ? tufItemMap.get(normalize(resolvedSlug)) : null) ||
       (queryId ? tufItemMap.get(String(queryId)) : null);
 
     const nonLcProb =
+      tufNonLeetcodeMap.get(normClean) ||
       tufNonLeetcodeMap.get(normKey) ||
       (resolvedSlug ? tufNonLeetcodeMap.get(normalize(resolvedSlug)) : null) ||
       (queryId ? tufNonLeetcodeMap.get(String(queryId)) : null) ||
       (queryId ? codeforcesMap.get(normalize(queryId)) : null) ||
       tufItem ||
+      externalProblemsMap.get(normClean) ||
       externalProblemsMap.get(normKey) ||
-      codeforcesMap.get(normKey);
+      codeforcesMap.get(normClean) ||
+      codeforcesMap.get(normKey) ||
+      (matchedDbItem?.platform && matchedDbItem.platform !== "LeetCode" ? matchedDbItem : null);
 
     const curatedSol =
+      curatedSolutionsMap.get(normClean) ||
       curatedSolutionsMap.get(normKey) ||
       (resolvedSlug ? curatedSolutionsMap.get(normalize(resolvedSlug)) : null) ||
-      (catItem ? curatedSolutionsMap.get(normalize(catItem.title)) : null);
+      (catItem ? curatedSolutionsMap.get(normalize(catItem.title)) : null) ||
+      (matchedDbItem ? curatedSolutionsMap.get(normalize(matchedDbItem.title)) : null);
 
     let lcSol =
       (resolvedSlug && leetcodeSolutionsMap.get(normalize(resolvedSlug))) ||
+      leetcodeSolutionsMap.get(normClean) ||
       leetcodeSolutionsMap.get(normKey) ||
       (catItem && leetcodeSolutionsMap.get(normalize(catItem.title))) ||
+      (matchedDbItem && leetcodeSolutionsMap.get(normalize(matchedDbItem.title))) ||
       (catItem?.questionId && leetcodeSolutionsMap.get(String(catItem.questionId))) ||
+      (matchedDbItem?.leetcodeId && leetcodeSolutionsMap.get(String(matchedDbItem.leetcodeId))) ||
+      (queryId && leetcodeSolutionsMap.get(String(queryId))) ||
+      findLcSolFuzzy(normClean) ||
       findLcSolFuzzy(normKey);
 
     if (!resolvedSlug && lcSol?.url?.includes("/problems/")) {
@@ -1497,8 +1558,8 @@ exports.getProblemSolution = async (req, res) => {
           name: "Optimal",
           isLeetCode: true,
           isTuf: false,
-          timeComplexity: lcSol?.timeComplexity || "O(N)",
-          spaceComplexity: lcSol?.spaceComplexity || "O(1)",
+          timeComplexity: formatComplexity(lcSol?.timeComplexity),
+          spaceComplexity: formatComplexity(lcSol?.spaceComplexity || "O(1)"),
           intuition: lcSol?.explanation || "Optimized solution approach with linear complexity.",
           code: lcRawCode,
           codes: codes,
@@ -1512,6 +1573,8 @@ exports.getProblemSolution = async (req, res) => {
         }
 
         approaches.forEach((app) => {
+          app.timeComplexity = formatComplexity(app.timeComplexity);
+          app.spaceComplexity = formatComplexity(app.spaceComplexity || "O(1)");
           const isOptimal = app === optimalApp || app.name?.toLowerCase().includes("optimal");
           let appCodes = typeof app.codes === "object" && app.codes !== null
             ? { ...app.codes }
@@ -1549,6 +1612,8 @@ exports.getProblemSolution = async (req, res) => {
         success: true,
         hasNotes: true,
         title: details?.title || curatedSol?.title || lcSol?.title || catItem?.title || problemKey,
+        platform: "LeetCode",
+        platformUrl: lcSol?.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : ""),
         problemStatement,
         constraints,
         examples: examplesText,
@@ -1616,16 +1681,35 @@ exports.getProblemSolution = async (req, res) => {
       });
     }
 
+    const fallbackTitle = cleanKey || problemKey;
+    const starterCodes = {
+      java: `// Problem: ${fallbackTitle}\nimport java.util.*;\n\npublic class Solution {\n    public void solve() {\n        // Write solution here\n    }\n}`,
+      cpp: `// Problem: ${fallbackTitle}\n#include <iostream>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solve() {\n        // Write solution here\n    }\n};`,
+      python: `# Problem: ${fallbackTitle}\nclass Solution:\n    def solve(self):\n        pass`,
+      javascript: `// Problem: ${fallbackTitle}\nfunction solve() {\n    // Write solution here\n}`,
+    };
+
     return res.json({
       success: true,
       hasNotes: false,
-      title: problemKey,
-      problemStatement: `Solve the problem: "${problemKey}".`,
+      title: fallbackTitle,
+      problemStatement: `Solve the problem: "${fallbackTitle}".\nImplement and test your optimal algorithm directly in the compiler studio.`,
       examples: "",
       testCases: [],
-      approaches: [],
+      approaches: [
+        {
+          name: "Optimal",
+          isLeetCode: false,
+          isTuf: false,
+          timeComplexity: "O(N)",
+          spaceComplexity: "O(1)",
+          intuition: `Formulate an optimal solution approach for "${fallbackTitle}". Evaluate time and space complexity constraints, handle edge conditions, and verify your logic against test cases.`,
+          code: starterCodes.java,
+          codes: starterCodes,
+        },
+      ],
       leetcodeSolution: null,
-      defaultCode: "",
+      defaultCode: starterCodes.java,
     });
   } catch (error) {
     console.error("[Practice:getProblemSolution]", error.message);

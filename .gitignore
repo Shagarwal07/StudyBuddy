@@ -16,6 +16,7 @@ client/.env*.local
 server/data/
 server/data/*.json
 server/archive_scripts/
+server/scripts/
 
 # Build outputs
 dist/
