@@ -19,7 +19,7 @@ export function ThemeProvider({ children }) {
       if (savedTheme === "web") return "web"; // migrated legacy setting
       if (savedSkin === "web" || savedSkin === "basic") return savedSkin;
     } catch {}
-    return "basic"; // Default skin is basic
+    return "web"; // Default skin is web
   });
 
   const [animatedBg, setAnimatedBg] = useState(() => {
@@ -49,7 +49,21 @@ export function ThemeProvider({ children }) {
   };
 
   const toggleSkin = () => {
-    setSkin((prev) => (prev === "web" ? "basic" : "web"));
+    const nextSkin = skin === "web" ? "basic" : "web";
+    try {
+      localStorage.setItem("studybuddy_skin", nextSkin);
+      document.documentElement.setAttribute("data-skin", nextSkin);
+    } catch {}
+    window.location.reload();
+  };
+
+  const handleSetSkin = (newSkin) => {
+    if (newSkin === skin) return;
+    try {
+      localStorage.setItem("studybuddy_skin", newSkin);
+      document.documentElement.setAttribute("data-skin", newSkin);
+    } catch {}
+    window.location.reload();
   };
 
   const toggleAnimatedBg = () => {
@@ -62,7 +76,7 @@ export function ThemeProvider({ children }) {
       setTheme,
       toggleTheme,
       skin,
-      setSkin,
+      setSkin: handleSetSkin,
       toggleSkin,
       animatedBg,
       setAnimatedBg,

@@ -1,4 +1,4 @@
-import { User, Palette, Info, LogOut, Code2, ExternalLink, Unlink, Sparkles } from "lucide-react";
+import { User, Palette, Info, LogOut, Code2, ExternalLink, Unlink, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -7,7 +7,7 @@ import useSettings from "../hooks/useSettings";
 import Loader from "../components/common/Loader";
 import api from "../api/axios";
 
-import AppShell from "../components/layout/AppShell";
+import AppShell, { SidebarTrigger } from "../components/layout/AppShell";
 import SettingsSection from "../components/settings/SettingsSection";
 import SettingsItem from "../components/settings/SettingsItem";
 
@@ -161,7 +161,19 @@ export default function Settings() {
 
   return (
     <AppShell title="Settings" showBack={false}>
-      <div className="w-full px-4 md:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6 lg:gap-8">
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-5 space-y-6">
+        {/* Top Header */}
+        <section className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-4">
+          <div className="flex items-center gap-2.5">
+            <SidebarTrigger />
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-neutral-100 flex items-center gap-2">
+              <SettingsIcon className="w-5 h-5 text-red-500 dark:text-red-400" />
+              Settings
+            </h1>
+          </div>
+        </section>
+
+        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
         {/* Sidebar Navigation */}
         <aside className="w-full md:w-56 lg:w-60 shrink-0 flex flex-col gap-1.5">
           {TABS.map((tab) => {
@@ -516,6 +528,7 @@ export default function Settings() {
             </SettingsSection>
           )}
         </main>
+        </div>
       </div>
     </AppShell>
   );

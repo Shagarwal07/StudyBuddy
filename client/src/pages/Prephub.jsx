@@ -20,7 +20,7 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api/axios";
-import AppShell from "../components/layout/AppShell";
+import AppShell, { SidebarTrigger } from "../components/layout/AppShell";
 import Loader from "../components/common/Loader";
 import { useAuth } from "../context/AuthContext";
 import RkVerificationModal from "../components/modals/RkVerificationModal";
@@ -334,7 +334,8 @@ export default function Prephub() {
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
         {/* Header & Main Navigation Tabs */}
         <section className="pt-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-neutral-800 pb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <SidebarTrigger />
             <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-100 flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-red-400" />
               Workspace
