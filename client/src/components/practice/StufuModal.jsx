@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Award,
+  ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
@@ -126,6 +127,13 @@ const LANG_LABELS = {
   javascript: "JavaScript",
   code: "Code",
 };
+
+const LANGUAGE_OPTIONS = [
+  { value: "java", label: "Java 21" },
+  { value: "cpp", label: "C++ (GCC)" },
+  { value: "python", label: "Python 3.12" },
+  { value: "javascript", label: "Node.js 20" },
+];
 
 const formatComplexity = (val, defaultVal = "O(1)") => {
   if (!val) return defaultVal;
@@ -313,12 +321,14 @@ export default function StufuModal({
   problem,
   initialShowSolution = false,
   onProblemSolved,
+  onProblemRevert,
 }) {
   const [showSolution, setShowSolution] = useState(initialShowSolution);
   const [splitRatio, setSplitRatio] = useState(42); // 42% left, 58% right
   const [isDragging, setIsDragging] = useState(false);
   const [editorHeightPercent, setEditorHeightPercent] = useState(58); // 58% editor, 42% console
   const [isDraggingVertical, setIsDraggingVertical] = useState(false);
+  const [isProblemSolved, setIsProblemSolved] = useState(Boolean(problem?.isSolved));
 
   // Solution state
   const [solutionData, setSolutionData] = useState(null);
@@ -340,6 +350,22 @@ export default function StufuModal({
   const rightPanelSplitRef = useRef(null);
   const textareaRef = useRef(null);
   const lineNumbersRef = useRef(null);
+  const langDropdownRef = useRef(null);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    if (!isLangDropdownOpen) return;
+    const handleClickOutside = (e) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target)) {
+        setIsLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isLangDropdownOpen]);
 
   const problemKey = problem?.id || problem?.title || problem?.key || "";
 
@@ -347,8 +373,9 @@ export default function StufuModal({
   useEffect(() => {
     if (isOpen) {
       setShowSolution(Boolean(initialShowSolution));
+      setIsProblemSolved(Boolean(problem?.isSolved));
     }
-  }, [isOpen, initialShowSolution, problemKey]);
+  }, [isOpen, initialShowSolution, problemKey, problem?.isSolved]);
 
   const currentPlatformName = useMemo(() => {
     const rawUrl = (
@@ -660,12 +687,25 @@ export default function StufuModal({
       window.open(targetUrl, "_blank");
     };
 
-    // Toggle problem solved state locally & in database
-    const handleToggleSolved = () => {
-      if (problem) {
-        onProblemSolved?.(problem.key || problem.title);
-        toast.success("Problem marked as solved! 🎉");
+    // Toggle problem solved state locally & in database or suggest already solved { Revision done }
+    const handleToggleSolved = async () => {
+      if (!problem) return;
+      const probKey = problem.key || String(problem.id) || problem.title;
+      if (isProblemSolved) {
+        toast.info("Already solved { Revision done } 🔄");
+        onProblemSolved?.(probKey, problem);
+        return;
       }
+      setIsProblemSolved(true);
+      await onProblemSolved?.(probKey, problem);
+    };
+
+    // Revert problem from solved back to pending/unsolved
+    const handleRevertSolved = async () => {
+      if (!problem) return;
+      const probKey = problem.key || String(problem.id) || problem.title;
+      setIsProblemSolved(false);
+      await onProblemRevert?.(probKey, problem);
     };
 
     // Copy solution code
@@ -818,17 +858,44 @@ export default function StufuModal({
                 <span>{showSolution ? "Hide Solution" : "View Solution"}</span>
               </button>
 
-              {/* Language Selector */}
-              <select
-                value={language}
-                onChange={(e) => handleLanguageChange(e.target.value)}
-                className="shrink-0 bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-neutral-200 outline-none hover:border-neutral-700 focus:border-red-500 cursor-pointer"
-              >
-                <option value="java">Java 21</option>
-                <option value="cpp">C++ (GCC)</option>
-                <option value="python">Python 3.12</option>
-                <option value="javascript">Node.js 20</option>
-              </select>
+              {/* Custom Dark Theme Language Selector Dropdown */}
+              <div ref={langDropdownRef} className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsLangDropdownOpen((prev) => !prev)}
+                  className="no-chamfer bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-neutral-200 outline-none focus:border-red-500 transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  title="Change compiler language"
+                >
+                  <span>{LANGUAGE_OPTIONS.find((l) => l.value === language)?.label || "Java 21"}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-150 ${isLangDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isLangDropdownOpen && (
+                  <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 w-36 bg-[#121215] border border-neutral-800 rounded-lg shadow-2xl py-1 z-50 font-mono text-xs overflow-hidden backdrop-blur-md">
+                    {LANGUAGE_OPTIONS.map((opt) => {
+                      const isSelected = language === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            handleLanguageChange(opt.value);
+                            setIsLangDropdownOpen(false);
+                          }}
+                          className={`no-chamfer w-full text-left px-3 py-1.5 transition flex items-center justify-between cursor-pointer ${
+                            isSelected
+                              ? "bg-red-500/15 text-red-400 font-semibold"
+                              : "text-neutral-300 hover:bg-neutral-800/80 hover:text-white"
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-red-400" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               {/* Reset to Blank Starter Button */}
               <button
@@ -856,17 +923,42 @@ export default function StufuModal({
                 <span>Copy & Open {currentPlatformName}</span>
               </button>
 
-              {/* Mark as Solved Button */}
+              {/* Mark as Solved / Already Solved Button */}
               <button
                 type="button"
                 onClick={handleToggleSolved}
-                className="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
-                title="Mark this problem as completed"
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                  isProblemSolved
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/10"
+                    : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30"
+                }`}
+                title={
+                  isProblemSolved
+                    ? "Already solved { Revision done } - Click to log revision"
+                    : "Mark this problem as completed"
+                }
               >
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">Mark Solved</span>
-                <span className="sm:hidden">Solved</span>
+                <span className="hidden sm:inline">
+                  {isProblemSolved ? "Solved {Revision done}" : "Mark Solved"}
+                </span>
+                <span className="sm:hidden">
+                  {isProblemSolved ? "{Revision done}" : "Solved"}
+                </span>
               </button>
+
+              {/* Revert to Pending Option (Visible when problem is solved) */}
+              {isProblemSolved && (
+                <button
+                  type="button"
+                  onClick={handleRevertSolved}
+                  className="shrink-0 px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 hover:text-amber-300 border border-amber-500/30 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  title="Revert this problem to pending (unsolved)"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Revert</span>
+                </button>
+              )}
 
               {/* Close Button */}
               <button
@@ -932,7 +1024,7 @@ export default function StufuModal({
                     <button
                       type="button"
                       onClick={() => handleCopySolution(activeApproachCode)}
-                      className="px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs flex items-center gap-1.5 transition cursor-pointer"
+                      className="no-chamfer px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
                       {copiedCode ? (
                         <>
@@ -1085,7 +1177,7 @@ export default function StufuModal({
                                       key={lKey}
                                       type="button"
                                       onClick={() => setRefLanguage(lKey)}
-                                      className={`px-2 py-0.5 rounded text-[11px] font-semibold transition cursor-pointer ${isActive
+                                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${isActive
                                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
                                           : "text-neutral-400 hover:text-neutral-200 border border-transparent"
                                         }`}
@@ -1096,32 +1188,32 @@ export default function StufuModal({
                                 })}
                               </div>
                             ) : availableRefLangs.length === 1 && (
-                              <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700 text-[10px] font-semibold">
+                              <span className="px-2.5 py-1 rounded bg-neutral-800 text-neutral-300 border border-neutral-700 text-[10px] font-semibold">
                                 {LANG_LABELS[availableRefLangs[0]] || availableRefLangs[0].toUpperCase()}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleCopySolution(activeApproachCode)}
-                              className="text-neutral-400 hover:text-neutral-200 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                              className="no-chamfer px-2.5 py-1 rounded text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition cursor-pointer flex items-center gap-1.5 text-[11px]"
                               title="Copy code"
                             >
                               {copiedCode ? (
                                 <>
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span className="text-emerald-400">Copied</span>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-emerald-400 font-medium">Copied</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy className="w-3 h-3" />
+                                  <Copy className="w-3.5 h-3.5" />
                                   <span>Copy</span>
                                 </>
                               )}
                             </button>
-                            <span className="text-neutral-700">|</span>
+                            <span className="text-neutral-700 select-none">|</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -1130,7 +1222,7 @@ export default function StufuModal({
                                   setLanguage(activeRefLang);
                                 }
                               }}
-                              className="text-red-400 hover:text-red-300 transition cursor-pointer text-[11px] font-semibold flex items-center gap-1"
+                              className="no-chamfer px-2.5 py-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
                               title="Load into compiler editor"
                             >
                               <span>Load into Compiler</span>
@@ -1375,7 +1467,11 @@ export default function StufuModal({
                               {runResult.isSolved && (
                                 <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/15 text-emerald-300 text-xs font-medium">
                                   <Award className="w-4 h-4 text-emerald-400 shrink-0" />
-                                  <span>Problem marked as SOLVED in your dashboard & streak updated! 🔥</span>
+                                  <span>
+                                    {isProblemSolved
+                                      ? "Already solved { Revision done } 🔥"
+                                      : "Problem marked as SOLVED in your dashboard & streak updated! 🔥"}
+                                  </span>
                                 </div>
                               )}
                             </div>
