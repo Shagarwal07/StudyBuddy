@@ -274,7 +274,7 @@ const getUserProgress = (userId) =>
   UserCodingProgress.findOneAndUpdate(
     { userId },
     { $setOnInsert: { solvedProblemKeys: [], starredProblemKeys: [], activeSheets: [], customSheets: [] } },
-    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
+    { upsert: true, new: true, returnDocument: "after", setDefaultsOnInsert: true }
   ).lean();
 
 const updateDailyCodingSolved = (userId, count = 1) =>
@@ -566,15 +566,21 @@ exports.getSheets = async (req, res) => {
     const allSheets = [];
 
     const calcSolved = (problems = []) =>
-      problems.filter(
-        (p) =>
-          solvedSet.has(normalize(p.title)) ||
+      problems.filter((p) => {
+        const cleanTitle = cleanProblemTitle(p.title);
+        const normClean = normalize(cleanTitle);
+        const normRaw = normalize(p.title);
+        const normSlug = p.leetcodeSlug ? normalize(p.leetcodeSlug) : "";
+        return (
+          solvedSet.has(normClean) ||
+          solvedSet.has(normRaw) ||
           solvedSet.has(String(p.id)) ||
           solvedSet.has(normalize(p.id)) ||
           solvedSet.has("cf" + normalize(p.id)) ||
           (p.leetcodeId && solvedSet.has(String(p.leetcodeId))) ||
-          (p.leetcodeSlug && solvedSet.has(normalize(p.leetcodeSlug)))
-      ).length;
+          (normSlug && solvedSet.has(normSlug))
+        );
+      }).length;
 
     // 1. Built-in roadmaps (database first, local dataset fallback)
     const BUILTIN_IDS = ["strivers-180", "sql-75", "codeforces-ladder", "neetcode-150", "strivers-a2z"];
@@ -1722,18 +1728,124 @@ exports.getProblemSolution = async (req, res) => {
  */
 exports.toggleProblemStatus = async (req, res) => {
   try {
-    const { problemKey } = req.body;
+    const { problemKey, action, title, leetcodeSlug, leetcodeId, id } = req.body;
     if (!problemKey) return res.status(400).json({ success: false, message: "problemKey is required" });
 
     const normKey = normalize(problemKey);
+    const keysToTrack = new Set([normKey]);
+
+    const rawTitle = title || problemKey;
+    const cleanTitle = cleanProblemTitle(rawTitle);
+    if (cleanTitle) keysToTrack.add(normalize(cleanTitle));
+    if (rawTitle) keysToTrack.add(normalize(rawTitle));
+    if (leetcodeSlug) keysToTrack.add(normalize(leetcodeSlug));
+    if (leetcodeId) keysToTrack.add(String(leetcodeId));
+    if (id) {
+      keysToTrack.add(String(id));
+      keysToTrack.add(normalize(id));
+      keysToTrack.add("cf" + normalize(id));
+    }
+
+    // Lookup known problem catalog for official slug / id aliases
+    const dbMatch = findProblemInDatabase(cleanTitle, rawTitle);
+    if (dbMatch) {
+      if (dbMatch.slug) keysToTrack.add(normalize(dbMatch.slug));
+      if (dbMatch.id || dbMatch.questionId) keysToTrack.add(String(dbMatch.id || dbMatch.questionId));
+      if (dbMatch.title) {
+        keysToTrack.add(normalize(dbMatch.title));
+        keysToTrack.add(normalize(cleanProblemTitle(dbMatch.title)));
+      }
+    }
+
+    const allKeys = Array.from(keysToTrack).filter(Boolean);
     const progress = await getUserProgress(req.user.id);
-    const isCurrentlySolved = (progress.solvedProblemKeys || []).includes(normKey);
+    const solvedSet = new Set(progress?.solvedProblemKeys || []);
+    const isCurrentlySolved = allKeys.some((k) => solvedSet.has(k));
+
+    // Choose single canonical slug key (never pure numbers/id) to ensure 1 problem = 1 count
+    const candidateSlug = leetcodeSlug || dbMatch?.slug || cleanTitle || normKey;
+    const canonicalKey = /^\d+$/.test(candidateSlug)
+      ? normalize(cleanTitle || rawTitle || normKey)
+      : normalize(candidateSlug);
+
+    // Explicit revert action
+    if (action === "revert") {
+      if (!isCurrentlySolved) {
+        return res.json({
+          success: true,
+          isSolved: false,
+          reverted: false,
+          message: "Problem is already pending",
+          problemKey: normKey,
+          totalSolved: solvedSet.size,
+        });
+      }
+
+      const [updatedProgress] = await Promise.all([
+        UserCodingProgress.findOneAndUpdate(
+          { userId: req.user.id },
+          { $pull: { solvedProblemKeys: { $in: allKeys } } },
+          { new: true }
+        ),
+        updateDailyCodingSolved(req.user.id, -1),
+      ]);
+
+      return res.json({
+        success: true,
+        isSolved: false,
+        reverted: true,
+        problemKey: normKey,
+        totalSolved: updatedProgress?.solvedProblemKeys?.length || 0,
+      });
+    }
+
+    // Explicit solve action
+    if (action === "solve") {
+      if (isCurrentlySolved) {
+        // Log revision without incrementing totalSolved or marking twice
+        await UserCodingProgress.findOneAndUpdate(
+          { userId: req.user.id },
+          { $addToSet: { revisedProblemKeys: { $each: allKeys } } }
+        );
+
+        return res.json({
+          success: true,
+          isSolved: true,
+          alreadySolved: true,
+          revisionDone: true,
+          message: "Already solved { Revision done }",
+          problemKey: normKey,
+          totalSolved: solvedSet.size,
+        });
+      }
+
+      const [updatedProgress] = await Promise.all([
+        UserCodingProgress.findOneAndUpdate(
+          { userId: req.user.id },
+          { $addToSet: { solvedProblemKeys: canonicalKey } },
+          { new: true }
+        ),
+        updateDailyCodingSolved(req.user.id, 1),
+      ]);
+
+      return res.json({
+        success: true,
+        isSolved: true,
+        alreadySolved: false,
+        problemKey: normKey,
+        totalSolved: updatedProgress?.solvedProblemKeys?.length || 0,
+      });
+    }
+
+    // Default toggle action (backward compatible)
     const isSolved = !isCurrentlySolved;
 
     const [updatedProgress] = await Promise.all([
       UserCodingProgress.findOneAndUpdate(
         { userId: req.user.id },
-        isCurrentlySolved ? { $pull: { solvedProblemKeys: normKey } } : { $addToSet: { solvedProblemKeys: normKey } },
+        isCurrentlySolved
+          ? { $pull: { solvedProblemKeys: { $in: allKeys } } }
+          : { $addToSet: { solvedProblemKeys: canonicalKey } },
         { new: true }
       ),
       updateDailyCodingSolved(req.user.id, isCurrentlySolved ? -1 : 1),
@@ -1742,6 +1854,7 @@ exports.toggleProblemStatus = async (req, res) => {
     res.json({
       success: true,
       isSolved,
+      reverted: isCurrentlySolved,
       problemKey: normKey,
       totalSolved: updatedProgress?.solvedProblemKeys?.length || 0,
     });
@@ -1794,8 +1907,20 @@ exports.syncSubmission = async (req, res) => {
       return res.json({ success: true, alreadySolved: false, totalSolved: updated.solvedProblemKeys.length });
     }
 
+    // Already solved -> record revision
+    await UserCodingProgress.findOneAndUpdate(
+      { userId: req.user.id },
+      { $addToSet: { revisedProblemKeys: key } }
+    );
+
     const current = await getUserProgress(req.user.id);
-    res.json({ success: true, alreadySolved: true, totalSolved: current?.solvedProblemKeys?.length || 0 });
+    res.json({
+      success: true,
+      alreadySolved: true,
+      revisionDone: true,
+      message: "Already solved { Revision done }",
+      totalSolved: current?.solvedProblemKeys?.length || 0,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "Sync error: " + error.message });
   }
@@ -1828,7 +1953,8 @@ exports.syncBatchSubmissions = async (req, res) => {
         { $addToSet: { solvedProblemKeys: { $each: newKeys } } },
         { new: true, upsert: true }
       );
-      await updateDailyCodingSolved(req.user.id, newKeys.length);
+      // Note: Historical backfill (batch sync) only updates solvedProblemKeys.
+      // It does NOT increment today's DailyActivity count since these problems were solved historically.
     }
 
     res.json({

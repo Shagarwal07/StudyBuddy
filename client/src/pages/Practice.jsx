@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   User,
   Download,
+  RotateCcw,
 } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -450,12 +451,81 @@ export default function Practice() {
     }
   };
 
-  // Toggle problem solved status
-  const handleToggleStatus = async (problemKey) => {
+  // Mark problem as solved or log revision
+  const handleMarkSolved = async (problemKey, prob = null) => {
     try {
-      const res = await api.post("/practice/toggle-status", { problemKey });
+      const payload = {
+        problemKey,
+        action: "solve",
+        title: prob?.title,
+        leetcodeSlug: prob?.leetcodeSlug,
+        leetcodeId: prob?.leetcodeId,
+        id: prob?.id,
+      };
+      const res = await api.post("/practice/toggle-status", payload);
       if (res.data.success) {
-        const isNowSolved = res.data.isSolved;
+        if (res.data.alreadySolved) {
+          toast.info("Already solved { Revision done } 🔄");
+        } else {
+          toast.success("Problem marked as solved! 🎉");
+          // Update local sheet details state
+          setSheetDetails((prev) => {
+            if (!prev || !prev.modules) return prev;
+            const updatedModules = prev.modules.map((mod) => ({
+              ...mod,
+              items: mod.items.map((item) =>
+                item.key === problemKey || String(item.id) === problemKey
+                  ? { ...item, isSolved: true }
+                  : item
+              ),
+            }));
+            return { ...prev, modules: updatedModules };
+          });
+
+          // Update active problem if open
+          setSelectedProblem((prev) => {
+            if (!prev) return prev;
+            if (prev.key === problemKey || String(prev.id) === problemKey) {
+              return { ...prev, isSolved: true };
+            }
+            return prev;
+          });
+
+          // Update sheets solved count
+          setSheets((prev) =>
+            prev.map((s) => {
+              if (s.id === activeSheetId) {
+                return {
+                  ...s,
+                  solved: s.solved + 1,
+                };
+              }
+              return s;
+            })
+          );
+        }
+        return res.data;
+      }
+    } catch (err) {
+      console.error("Mark solved error:", err);
+      toast.error("Failed to mark problem as solved");
+    }
+  };
+
+  // Revert problem from solved back to pending/unsolved
+  const handleRevertProblem = async (problemKey, prob = null) => {
+    try {
+      const payload = {
+        problemKey,
+        action: "revert",
+        title: prob?.title,
+        leetcodeSlug: prob?.leetcodeSlug,
+        leetcodeId: prob?.leetcodeId,
+        id: prob?.id,
+      };
+      const res = await api.post("/practice/toggle-status", payload);
+      if (res.data.success) {
+        toast.info("Problem reverted to pending.");
 
         // Update local sheet details state
         setSheetDetails((prev) => {
@@ -464,29 +534,50 @@ export default function Practice() {
             ...mod,
             items: mod.items.map((item) =>
               item.key === problemKey || String(item.id) === problemKey
-                ? { ...item, isSolved: isNowSolved }
+                ? { ...item, isSolved: false }
                 : item
             ),
           }));
           return { ...prev, modules: updatedModules };
         });
 
-        // Update sheets solved count
-        setSheets((prev) =>
-          prev.map((s) => {
-            if (s.id === activeSheetId) {
-              return {
-                ...s,
-                solved: isNowSolved ? s.solved + 1 : Math.max(0, s.solved - 1),
-              };
-            }
-            return s;
-          })
-        );
+        // Update active problem if open
+        setSelectedProblem((prev) => {
+          if (!prev) return prev;
+          if (prev.key === problemKey || String(prev.id) === problemKey) {
+            return { ...prev, isSolved: false };
+          }
+          return prev;
+        });
+
+        // Update sheets solved count if was solved
+        if (res.data.reverted) {
+          setSheets((prev) =>
+            prev.map((s) => {
+              if (s.id === activeSheetId) {
+                return {
+                  ...s,
+                  solved: Math.max(0, s.solved - 1),
+                };
+              }
+              return s;
+            })
+          );
+        }
+        return res.data;
       }
     } catch (err) {
-      console.error("Status toggle error:", err);
+      console.error("Revert problem error:", err);
+      toast.error("Failed to revert problem status");
     }
+  };
+
+  // Toggle problem solved status (fallback compatibility)
+  const handleToggleStatus = async (problemKey, isCurrentlySolved) => {
+    if (isCurrentlySolved) {
+      return handleRevertProblem(problemKey);
+    }
+    return handleMarkSolved(problemKey);
   };
 
   // Open In-App Stufu Modal (default to split-screen solution view)
@@ -496,8 +587,8 @@ export default function Practice() {
     setIsStufuOpen(true);
   };
 
-  // Flattened and filtered problems
-  const allProblems = useMemo(() => {
+  // All flattened problems in the active sheet, filtered by search query
+  const searchedProblems = useMemo(() => {
     if (!sheetDetails?.modules || !Array.isArray(sheetDetails.modules)) return [];
     const q = searchQuery.trim().toLowerCase();
 
@@ -505,16 +596,62 @@ export default function Practice() {
       .flatMap((mod) => (Array.isArray(mod?.items) ? mod.items : []))
       .filter((item) => {
         if (!item) return false;
+        if (!q) return true;
         const title = (item.title || "").toLowerCase();
         const modTitle = (item.module || "").toLowerCase();
-        if (q && !title.includes(q) && !modTitle.includes(q)) return false;
-        const diff = (item.leetcodeDifficulty || "Medium").toUpperCase();
-        if (selectedDifficulty !== "ALL" && diff !== selectedDifficulty) return false;
-        if (selectedStatus === "SOLVED" && !item.isSolved) return false;
-        if (selectedStatus === "PENDING" && item.isSolved) return false;
-        return true;
+        return title.includes(q) || modTitle.includes(q);
       });
-  }, [sheetDetails, searchQuery, selectedDifficulty, selectedStatus]);
+  }, [sheetDetails, searchQuery]);
+
+  // Counts for difficulty filters (respecting search query and active status filter)
+  const difficultyCounts = useMemo(() => {
+    const itemsForDiff =
+      selectedStatus === "ALL"
+        ? searchedProblems
+        : searchedProblems.filter((i) => (selectedStatus === "SOLVED" ? i.isSolved : !i.isSolved));
+
+    const counts = { ALL: itemsForDiff.length, EASY: 0, MEDIUM: 0, HARD: 0 };
+    itemsForDiff.forEach((item) => {
+      const diff = (item.leetcodeDifficulty || "Medium").toUpperCase();
+      if (counts[diff] !== undefined) {
+        counts[diff]++;
+      } else {
+        counts.MEDIUM++;
+      }
+    });
+    return counts;
+  }, [searchedProblems, selectedStatus]);
+
+  // Counts for status filters (respecting search query and active difficulty filter)
+  const statusCounts = useMemo(() => {
+    const itemsForStatus =
+      selectedDifficulty === "ALL"
+        ? searchedProblems
+        : searchedProblems.filter(
+            (i) => (i.leetcodeDifficulty || "Medium").toUpperCase() === selectedDifficulty
+          );
+
+    const counts = { ALL: itemsForStatus.length, PENDING: 0, SOLVED: 0 };
+    itemsForStatus.forEach((item) => {
+      if (item.isSolved) {
+        counts.SOLVED++;
+      } else {
+        counts.PENDING++;
+      }
+    });
+    return counts;
+  }, [searchedProblems, selectedDifficulty]);
+
+  // Flattened and filtered problems for the active table view
+  const allProblems = useMemo(() => {
+    return searchedProblems.filter((item) => {
+      const diff = (item.leetcodeDifficulty || "Medium").toUpperCase();
+      if (selectedDifficulty !== "ALL" && diff !== selectedDifficulty) return false;
+      if (selectedStatus === "SOLVED" && !item.isSolved) return false;
+      if (selectedStatus === "PENDING" && item.isSolved) return false;
+      return true;
+    });
+  }, [searchedProblems, selectedDifficulty, selectedStatus]);
 
   // Overall solved progress for active sheet
   const { totalCount, solvedCount, progressPercent } = useMemo(() => {
@@ -924,38 +1061,64 @@ export default function Practice() {
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Difficulty */}
                   <div className="flex items-center rounded-lg bg-slate-100 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800 p-0.5 text-xs">
-                    {["ALL", "EASY", "MEDIUM", "HARD"].map((diff) => (
-                      <button
-                        key={diff}
-                        type="button"
-                        onClick={() => setSelectedDifficulty(diff)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                          selectedDifficulty === diff
-                            ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold"
-                            : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
-                        }`}
-                      >
-                        {diff === "ALL" ? "All Diff" : diff.charAt(0) + diff.slice(1).toLowerCase()}
-                      </button>
-                    ))}
+                    {["ALL", "EASY", "MEDIUM", "HARD"].map((diff) => {
+                      const count = difficultyCounts[diff] || 0;
+                      const isSelected = selectedDifficulty === diff;
+                      return (
+                        <button
+                          key={diff}
+                          type="button"
+                          onClick={() => setSelectedDifficulty(diff)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold shadow-xs"
+                              : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                          }`}
+                        >
+                          <span>{diff === "ALL" ? "All Diff" : diff.charAt(0) + diff.slice(1).toLowerCase()}</span>
+                          <span
+                            className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight ${
+                              isSelected
+                                ? "bg-red-500/20 text-red-600 dark:text-red-300 font-bold"
+                                : "bg-slate-200/80 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Status */}
                   <div className="flex items-center rounded-lg bg-slate-100 dark:bg-[#0E0E12] border border-slate-200 dark:border-neutral-800 p-0.5 text-xs">
-                    {["ALL", "PENDING", "SOLVED"].map((status) => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => setSelectedStatus(status)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                          selectedStatus === status
-                            ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold"
-                            : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
-                        }`}
-                      >
-                        {status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}
-                      </button>
-                    ))}
+                    {["ALL", "PENDING", "SOLVED"].map((status) => {
+                      const count = statusCounts[status] || 0;
+                      const isSelected = selectedStatus === status;
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => setSelectedStatus(status)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold shadow-xs"
+                              : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                          }`}
+                        >
+                          <span>{status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}</span>
+                          <span
+                            className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight ${
+                              isSelected
+                                ? "bg-red-500/20 text-red-600 dark:text-red-300 font-bold"
+                                : "bg-slate-200/80 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1008,9 +1171,17 @@ export default function Practice() {
                             <td className="py-3 px-4 text-center">
                               <button
                                 type="button"
-                                onClick={() => handleToggleStatus(prob.key || String(prob.id))}
-                                className="text-slate-400 hover:text-emerald-500 dark:text-neutral-500 dark:hover:text-emerald-400 transition cursor-pointer"
-                                title={prob.isSolved ? "Mark as pending" : "Mark as solved"}
+                                onClick={() => handleMarkSolved(prob.key || String(prob.id), prob)}
+                                className={`transition cursor-pointer ${
+                                  prob.isSolved
+                                    ? "text-emerald-500 hover:text-emerald-400 dark:text-emerald-400 dark:hover:text-emerald-300"
+                                    : "text-slate-400 hover:text-emerald-500 dark:text-neutral-500 dark:hover:text-emerald-400"
+                                }`}
+                                title={
+                                  prob.isSolved
+                                    ? "Already solved { Revision done } - Click to log revision"
+                                    : "Mark as solved"
+                                }
                               >
                                 {prob.isSolved ? (
                                   <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 fill-emerald-500/20" />
@@ -1158,22 +1329,8 @@ export default function Practice() {
           }}
           problem={selectedProblem}
           initialShowSolution={stufuShowSolution}
-          onProblemSolved={(probKey) => {
-            setSheetDetails((prev) => {
-              if (!prev || !prev.modules || !Array.isArray(prev.modules)) return prev;
-              return {
-                ...prev,
-                modules: prev.modules.map((mod) => ({
-                  ...mod,
-                  items: (mod.items || []).map((item) =>
-                    item.key === probKey || String(item.id) === probKey
-                      ? { ...item, isSolved: true }
-                      : item
-                  ),
-                })),
-              };
-            });
-          }}
+          onProblemSolved={(probKey, probObj) => handleMarkSolved(probKey, probObj || selectedProblem)}
+          onProblemRevert={(probKey, probObj) => handleRevertProblem(probKey, probObj || selectedProblem)}
         />
       )}
     </AppShell>

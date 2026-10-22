@@ -16,6 +16,10 @@ const UserCodingProgressSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    revisedProblemKeys: {
+      type: [String],
+      default: [],
+    },
     activeSheets: {
       type: [String],
       default: [],

@@ -96,7 +96,7 @@ function showBilluSolvedCutout() {
 // -------------------------------------------------------------
 // 2. In-Page Problem Solved Badge
 // -------------------------------------------------------------
-function renderStatusBadge(isSolved) {
+function renderStatusBadge(isSolved, isRevision = false) {
   document.getElementById("studybuddy-status-badge")?.remove();
 
   const badge = document.createElement("div");
@@ -112,7 +112,9 @@ function renderStatusBadge(isSolved) {
   `;
   badge.innerHTML = `
     <span style="font-weight: 700; color: #fff;">Study</span><span style="font-weight: 900; background: linear-gradient(135deg, #FF4D4D, #FFA270); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Buddy</span>
-    <span style="color: ${isSolved ? "#34d399" : "#94a3b8"}; font-weight: 600; margin-left: 4px;">${isSolved ? "Solved ✓" : "Sync Ready"}</span>
+    <span style="color: ${isSolved ? "#34d399" : "#94a3b8"}; font-weight: 600; margin-left: 4px;">${
+      isSolved ? (isRevision ? "Solved ✓ {Revision done}" : "Solved ✓") : "Sync Ready"
+    }</span>
   `;
   document.body.appendChild(badge);
 }
@@ -166,7 +168,7 @@ function syncToStudyBuddy(problemSlug) {
         if (!keys.includes(norm)) chrome.storage.local.set({ studybuddy_solved_keys: [...keys, norm] });
       });
 
-      renderStatusBadge(true);
+      renderStatusBadge(true, Boolean(res?.alreadySolved));
       if (!res?.alreadySolved) showBilluSolvedCutout();
     }
   );

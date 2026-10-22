@@ -229,41 +229,67 @@ html[data-theme="light"][data-skin="web"] body {
 }
 
 /* Universal elimination of plain rounded rectangles in Web Theme — apply geometric chamfers */
-html[data-skin="web"] :is(.rounded-xl, .rounded-2xl, .rounded-3xl):not([role="dialog"]):not(.overflow-y-auto):not(.overflow-auto):not(table):not(tr):not(td):not([class*="h-[95vh]"]):not([class*="max-w-7xl"]):not(.brand-logo):not([data-logo]):not(.no-chamfer):not([class*="w-6"]):not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]):not([class*="w-13"]):not([class*="w-14"]):not([class*="w-16"]) {
-  border-radius: 0 !important;
-  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
-  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+/* 
+ * CRITICAL RULE: Content Protection
+ * Containers (cards, panels, code blocks, modals, tables, dialogs) must NEVER
+ * have arbitrary clip-paths applied via universal classes because clip-path
+ * slices into toolbars, headers, scrollbars, borders, and child text.
+ * Dedicated cutout containers (e.g. .cutout-card, <Cutout>) provide safe padding.
+ */
+
+/* Plain / text / ghost / transparent buttons: NEVER clip */
+html[data-skin="web"] button:not([class*="bg-"]):not([class*="border"]):not(.cutout-btn):not([class*="btn-"]),
+html[data-skin="web"] button.bg-transparent,
+html[data-skin="web"] button[data-ghost],
+html[data-skin="web"] button[data-plain],
+html[data-skin="web"] button.no-chamfer,
+html[data-skin="web"] button[class*="hover:text-"]:not([class*="bg-"]):not([class*="border"]) {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  border-radius: 4px;
 }
 
-html[data-skin="web"] .rounded-lg:not([role="dialog"]):not(.overflow-y-auto):not(.overflow-auto):not(table):not(tr):not(td):not([class*="h-[95vh]"]):not(.brand-logo):not([data-logo]):not(.no-chamfer):not([class*="w-6"]):not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]):not([class*="w-13"]):not([class*="w-14"]):not([class*="w-16"]) {
-  border-radius: 0 !important;
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+/* Explicit exemption classes for any element that must never be clipped */
+.no-chamfer,
+.no-cut,
+[data-no-cut],
+[data-ghost],
+[data-plain] {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
 }
 
-html[data-skin="web"] :is(.rounded-md, .rounded-sm, .rounded):not([role="dialog"]):not(.overflow-y-auto):not(.overflow-auto):not(table):not(tr):not(td):not(.brand-logo):not([data-logo]):not(.no-chamfer) {
+/* Standard Styled Buttons (6px safe chamfer - preserves text and padding) */
+html[data-skin="web"] button:is([class*="bg-"], [class*="border"], .cutout-btn, .btn, [type="submit"]):not([data-circle]):not(.no-chamfer):not([data-ghost]):not([data-plain]):not(.brand-logo):not([data-logo]):not([class*="rounded-full"]) {
   border-radius: 0 !important;
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
   -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
 }
 
-/* Nav capsules, pill badges, and chips chamfer (6px) */
-html[data-skin="web"] .rounded-full:not([data-circle]):not(span[class*="w-1."]):not(span[class*="w-2"]):not(div[class*="w-6"]):not(div[class*="w-8"]):not(img):not(table):not(td):not(.brand-logo):not([data-logo]):not(.no-chamfer) {
+/* Compact Badges / Chips / Small Pill Buttons (height < 28px or py-0.5 / py-1: safe 3.5px chamfer) */
+html[data-skin="web"] button:is([class*="py-0.5"], [class*="py-1"], [class*="text-[10px]"], [class*="text-[11px]"], [class*="text-xs"], .cutout-chip):is([class*="bg-"], [class*="border"]):not(.no-chamfer) {
   border-radius: 0 !important;
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px) !important;
-  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px) !important;
+  clip-path: polygon(3.5px 0, calc(100% - 3.5px) 0, 100% 3.5px, 100% calc(100% - 3.5px), calc(100% - 3.5px) 100%, 3.5px 100%, 0 calc(100% - 3.5px), 0 3.5px) !important;
+  -webkit-clip-path: polygon(3.5px 0, calc(100% - 3.5px) 0, 100% 3.5px, 100% calc(100% - 3.5px), calc(100% - 3.5px) 100%, 3.5px 100%, 0 calc(100% - 3.5px), 0 3.5px) !important;
 }
 
-/* Button & Input chamfers (10px) */
-html[data-skin="web"] button:not([data-circle]):not(.no-chamfer):not(.brand-logo):not([data-logo]),
-html[data-skin="web"] input[type="text"]:not(.brand-logo),
-html[data-skin="web"] input[type="email"]:not(.brand-logo),
-html[data-skin="web"] input[type="password"]:not(.brand-logo),
-html[data-skin="web"] textarea,
-html[data-skin="web"] select {
+/* Full pill / rounded-full badges (5px chamfer for badges, circle protection for avatars/dots) */
+html[data-skin="web"] .rounded-full:is(button, .badge, [role="button"]):not([data-circle]):not(span[class*="w-1."]):not(span[class*="w-2"]):not(div[class*="w-6"]):not(div[class*="w-8"]):not(img):not(.brand-logo):not(.no-chamfer) {
   border-radius: 0 !important;
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
+  -webkit-clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
+}
+
+/* Form Inputs (6px chamfer for tech edge without clipping input text) */
+html[data-skin="web"] input[type="text"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="email"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="password"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] input[type="url"]:not(.brand-logo):not(.no-chamfer),
+html[data-skin="web"] textarea:not(.no-chamfer),
+html[data-skin="web"] select:not(.no-chamfer) {
+  border-radius: 0 !important;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
 }
 
 /* 
@@ -302,8 +328,8 @@ html[data-skin="web"] select {
   position: relative;
   padding: 1px;
   background: var(--cutout-stroke, rgba(241, 232, 218, 0.22));
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
   border-radius: 0 !important;
 }
 
@@ -313,16 +339,16 @@ html[data-skin="web"] select {
   height: 100%;
   background: var(--cutout-inner-bg);
   box-shadow: var(--cutout-inner-shadow);
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
 }
 
 .cutout-outer-chip {
   position: relative;
   padding: 1px;
   background: var(--cutout-stroke, rgba(241, 232, 218, 0.22));
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
   border-radius: 0 !important;
 }
 
@@ -331,8 +357,8 @@ html[data-skin="web"] select {
   height: 100%;
   background: var(--cutout-inner-bg);
   box-shadow: var(--cutout-inner-shadow);
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
 }
 
 /* Chamfer Cutout polygon utilities */
@@ -353,13 +379,13 @@ html[data-skin="web"] select {
 
 .cutout-btn,
 .cutout-input {
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  -webkit-clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
 }
 
 .cutout-chip {
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-  -webkit-clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  -webkit-clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
 }
 
 /* ==========================================================================
@@ -592,8 +618,22 @@ html[data-skin="web"] .cutout-card-bl:hover {
 }
 
 /* ==========================================================================
-   4. TYPOGRAPHY
+   4. TYPOGRAPHY (Zero RGB Subpixel Color Diffusion)
    ========================================================================== */
+html[data-skin="web"],
+html[data-skin="web"] * {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+html[data-skin="web"] select,
+html[data-skin="web"] option {
+  color-scheme: dark !important;
+  background-color: #121216 !important;
+  color: #f5f5f5 !important;
+}
+
 html[data-skin="web"] h1,
 html[data-skin="web"] h2,
 html[data-skin="web"] h3,
