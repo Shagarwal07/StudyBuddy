@@ -22,7 +22,9 @@ const tufNonLeetcodeMap = new Map();
 const codeforcesMap = new Map();
 const codeforcesSolutionsMap = new Map();
 const externalProblemsMap = new Map();
+const aiStandaloneSolutionsMap = new Map();
 let lastLcMtime = 0;
+let lastAiMtime = 0;
 const dataDir = path.resolve(__dirname, "../data");
 
 const normalize = (str) =>
@@ -414,9 +416,62 @@ function loadData() {
         });
       }
     }
+
+    const aiSolPath = path.join(dataDir, "ai-standalone-solutions.json");
+    if (fs.existsSync(aiSolPath)) {
+      const stat = fs.statSync(aiSolPath);
+      if (lastAiMtime !== stat.mtimeMs || aiStandaloneSolutionsMap.size === 0) {
+        lastAiMtime = stat.mtimeMs;
+        try {
+          const raw = JSON.parse(fs.readFileSync(aiSolPath, "utf8"));
+          aiStandaloneSolutionsMap.clear();
+          for (const [key, val] of Object.entries(raw)) {
+            aiStandaloneSolutionsMap.set(normalize(key), val);
+          }
+        } catch (e) {
+          console.error("[Practice:loadData] Failed to parse ai-standalone-solutions.json:", e.message);
+        }
+      }
+    }
   } catch (err) {
     console.error("[Practice] Error loading static datasets:", err.message);
   }
+}
+
+function mergeAiLanguages(approaches, problemKey, resolvedSlug) {
+  if (!Array.isArray(approaches) || approaches.length === 0) return approaches;
+  loadData();
+  const aiData =
+    (resolvedSlug ? aiStandaloneSolutionsMap.get(normalize(resolvedSlug)) : null) ||
+    aiStandaloneSolutionsMap.get(normalize(problemKey));
+
+  if (!aiData) return approaches;
+
+  approaches.forEach((app) => {
+    // Only merge into educational standalone approaches, NEVER touch official!
+    if (!app.isOfficial && !app.name?.includes("★")) {
+      const match =
+        aiData[app.name] ||
+        aiData[app.name.toLowerCase()] ||
+        (app.name.toLowerCase().includes("brute") ? aiData["Brute Force"] || aiData["brute"] : null) ||
+        (app.name.toLowerCase().includes("better") ? aiData["Better"] || aiData["better"] : null) ||
+        (app.name.toLowerCase().includes("optimal") ? aiData["Optimal"] || aiData["optimal"] : null);
+
+      if (match) {
+        if (!app.codes || typeof app.codes !== "object") {
+          app.codes = {};
+        }
+        if (match.cpp && typeof match.cpp === "string" && match.cpp.trim()) {
+          app.codes.cpp = match.cpp;
+        }
+        if (match.python && typeof match.python === "string" && match.python.trim()) {
+          app.codes.python = match.python;
+        }
+      }
+    }
+  });
+
+  return approaches;
 }
 
 loadData();
@@ -1406,35 +1461,6 @@ exports.getProblemSolution = async (req, res) => {
       resolvedSlug = problemKey.toLowerCase().trim();
     }
 
-    // 1. Primary source of truth: MongoDB Atlas ProblemSolution (works in production without local files)
-    const orFilters = [{ aliases: normClean }, { aliases: normKey }];
-    if (resolvedSlug) {
-      orFilters.push({ slug: resolvedSlug });
-      orFilters.push({ aliases: resolvedSlug });
-    }
-    if (queryId) {
-      orFilters.push({ aliases: normalize(queryId) });
-      orFilters.push({ aliases: String(queryId).toLowerCase().trim() });
-    }
-
-    const dbSol = await ProblemSolution.findOne({ $or: orFilters }).lean().catch(() => null);
-    if (dbSol && (dbSol.approaches?.length || dbSol.defaultCode)) {
-      return res.json({
-        success: true,
-        hasNotes: true,
-        title: dbSol.title || cleanKey || problemKey,
-        platform: dbSol.platform || "LeetCode",
-        platformUrl: dbSol.platformUrl || "",
-        problemStatement: dbSol.problemStatement || `Solve the problem: "${dbSol.title}".`,
-        constraints: dbSol.constraints || [],
-        examples: dbSol.examples || "",
-        testCases: dbSol.testCases || [],
-        approaches: dbSol.approaches || [],
-        leetcodeSolution: null,
-        defaultCode: dbSol.defaultCode || dbSol.approaches?.[0]?.code || "",
-      });
-    }
-
     loadData();
 
     const matchedDbItem = findProblemInDatabase(cleanKey, problemKey);
@@ -1449,6 +1475,140 @@ exports.getProblemSolution = async (req, res) => {
     if (!resolvedSlug && catItem?.slug) resolvedSlug = catItem.slug;
     if (!resolvedSlug && matchedDbItem?.slug) resolvedSlug = matchedDbItem.slug;
     if (!resolvedSlug && matchedDbItem?.leetcodeSlug) resolvedSlug = matchedDbItem.leetcodeSlug;
+
+    let lcSol =
+      (resolvedSlug && leetcodeSolutionsMap.get(normalize(resolvedSlug))) ||
+      leetcodeSolutionsMap.get(normClean) ||
+      leetcodeSolutionsMap.get(normKey) ||
+      (catItem && leetcodeSolutionsMap.get(normalize(catItem.title))) ||
+      (matchedDbItem && leetcodeSolutionsMap.get(normalize(matchedDbItem.title))) ||
+      (catItem?.questionId && leetcodeSolutionsMap.get(String(catItem.questionId))) ||
+      (matchedDbItem?.leetcodeId && leetcodeSolutionsMap.get(String(matchedDbItem.leetcodeId))) ||
+      (queryId && leetcodeSolutionsMap.get(String(queryId))) ||
+      findLcSolFuzzy(normClean) ||
+      findLcSolFuzzy(normKey);
+
+    if (!resolvedSlug && lcSol?.url?.includes("/problems/")) {
+      resolvedSlug = lcSol.url.split("/problems/")[1]?.split("/")[0];
+    }
+
+    const curatedSol =
+      curatedSolutionsMap.get(normClean) ||
+      curatedSolutionsMap.get(normKey) ||
+      (resolvedSlug ? curatedSolutionsMap.get(normalize(resolvedSlug)) : null) ||
+      (catItem ? curatedSolutionsMap.get(normalize(catItem.title)) : null) ||
+      (matchedDbItem ? curatedSolutionsMap.get(normalize(matchedDbItem.title)) : null);
+
+    // 1. Primary source of truth: MongoDB Atlas ProblemSolution (works in production without local files)
+    const orFilters = [{ aliases: normClean }, { aliases: normKey }];
+    if (resolvedSlug) {
+      orFilters.push({ slug: resolvedSlug });
+      orFilters.push({ aliases: resolvedSlug });
+    }
+    if (queryId) {
+      orFilters.push({ aliases: normalize(queryId) });
+      orFilters.push({ aliases: String(queryId).toLowerCase().trim() });
+    }
+
+    const dbSol = await ProblemSolution.findOne({ $or: orFilters }).lean().catch(() => null);
+    // If dbSol only has 1 approach, but curatedSol has full multi-approach 3 tiers, prefer curatedSol!
+    const useCuratedMulti = curatedSol?.approaches?.length > 1 && (!dbSol?.approaches || dbSol.approaches.length <= 1);
+
+    if (dbSol && (dbSol.approaches?.length || dbSol.defaultCode) && !useCuratedMulti) {
+      let rawApproaches = dbSol.approaches || [];
+
+      // If dbSol only has 1 approach and that approach is class Solution (the official solution from platform):
+      if (
+        rawApproaches.length === 1 &&
+        (rawApproaches[0].code?.includes("class Solution") ||
+          rawApproaches[0].codes?.java?.includes("class Solution"))
+      ) {
+        rawApproaches[0].name = "★ Official";
+        rawApproaches[0].isOfficial = true;
+        rawApproaches[0].isLeetCode = true;
+      }
+
+      const approaches = rawApproaches.map((app) => {
+        let appCodes = typeof app.codes === "object" && app.codes !== null
+          ? { ...app.codes }
+          : typeof app.code === "object" && app.code !== null
+            ? { ...app.code }
+            : { java: typeof app.code === "string" ? app.code : "" };
+
+        // Ensure empty keys are omitted
+        Object.keys(appCodes).forEach((k) => {
+          if (!appCodes[k] || typeof appCodes[k] !== "string" || !appCodes[k].trim()) {
+            delete appCodes[k];
+          }
+        });
+
+        let appCode = typeof app.code === "string" && app.code.trim()
+          ? app.code
+          : appCodes.java || appCodes.cpp || appCodes.python || "";
+
+        return {
+          ...app,
+          timeComplexity: formatComplexity(app.timeComplexity),
+          spaceComplexity: formatComplexity(app.spaceComplexity || "O(1)"),
+          code: appCode,
+          codes: appCodes,
+        };
+      });
+
+      // Check if official approach already exists in dbSol.approaches
+      const officialApp = approaches.find(
+        (a) => a.isOfficial || a.name?.includes("★") || a.name?.toLowerCase().includes("official")
+      );
+      if (officialApp && lcSol?.code && typeof lcSol.code === "object") {
+        if (!officialApp.codes || typeof officialApp.codes !== "object") officialApp.codes = {};
+        Object.keys(lcSol.code).forEach((langKey) => {
+          if (lcSol.code[langKey] && (!officialApp.codes[langKey] || !officialApp.codes[langKey].trim())) {
+            officialApp.codes[langKey] = lcSol.code[langKey];
+          }
+        });
+      } else if (!officialApp && lcSol?.code) {
+        const lcCodes = typeof lcSol.code === "object" ? { ...lcSol.code } : { java: lcSol.code || "" };
+        const lcRaw = lcCodes.java || lcCodes.cpp || lcCodes.python || lcCodes.javascript || "";
+        if (lcRaw) {
+          const optimalApp = approaches.find((a) => a.name?.toLowerCase().includes("optimal")) || approaches[approaches.length - 1];
+          approaches.push({
+            name: "★ Official",
+            isOfficial: true,
+            isLeetCode: true,
+            timeComplexity: formatComplexity(lcSol.timeComplexity || optimalApp?.timeComplexity),
+            spaceComplexity: formatComplexity(lcSol.spaceComplexity || optimalApp?.spaceComplexity || "O(1)"),
+            intuition: lcSol.explanation || "Official platform accepted solution matching the LeetCode judge method signature.",
+            code: lcRaw,
+            codes: lcCodes,
+            url: lcSol.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : undefined),
+          });
+        }
+      }
+
+      // Dynamically merge isolated AI-generated C++ & Python into educational approaches
+      mergeAiLanguages(approaches, cleanKey || problemKey, resolvedSlug);
+
+      const defaultCode =
+        approaches.find((a) => a.name?.toLowerCase().includes("optimal") && !a.isOfficial)?.code ||
+        approaches[0]?.code ||
+        dbSol.defaultCode ||
+        "";
+
+      return res.json({
+        success: true,
+        hasNotes: true,
+        title: dbSol.title || cleanKey || problemKey,
+        platform: dbSol.platform || "LeetCode",
+        platformUrl: dbSol.platformUrl || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : ""),
+        problemStatement: dbSol.problemStatement || `Solve the problem: "${dbSol.title}".`,
+        constraints: dbSol.constraints || [],
+        examples: dbSol.examples || "",
+        testCases: dbSol.testCases || [],
+        approaches,
+        leetcodeSolution: lcSol,
+        defaultCode,
+      });
+    }
 
     const tufItem =
       tufItemMap.get(normClean) ||
@@ -1468,29 +1628,6 @@ exports.getProblemSolution = async (req, res) => {
       codeforcesMap.get(normClean) ||
       codeforcesMap.get(normKey) ||
       (matchedDbItem?.platform && matchedDbItem.platform !== "LeetCode" ? matchedDbItem : null);
-
-    const curatedSol =
-      curatedSolutionsMap.get(normClean) ||
-      curatedSolutionsMap.get(normKey) ||
-      (resolvedSlug ? curatedSolutionsMap.get(normalize(resolvedSlug)) : null) ||
-      (catItem ? curatedSolutionsMap.get(normalize(catItem.title)) : null) ||
-      (matchedDbItem ? curatedSolutionsMap.get(normalize(matchedDbItem.title)) : null);
-
-    let lcSol =
-      (resolvedSlug && leetcodeSolutionsMap.get(normalize(resolvedSlug))) ||
-      leetcodeSolutionsMap.get(normClean) ||
-      leetcodeSolutionsMap.get(normKey) ||
-      (catItem && leetcodeSolutionsMap.get(normalize(catItem.title))) ||
-      (matchedDbItem && leetcodeSolutionsMap.get(normalize(matchedDbItem.title))) ||
-      (catItem?.questionId && leetcodeSolutionsMap.get(String(catItem.questionId))) ||
-      (matchedDbItem?.leetcodeId && leetcodeSolutionsMap.get(String(matchedDbItem.leetcodeId))) ||
-      (queryId && leetcodeSolutionsMap.get(String(queryId))) ||
-      findLcSolFuzzy(normClean) ||
-      findLcSolFuzzy(normKey);
-
-    if (!resolvedSlug && lcSol?.url?.includes("/problems/")) {
-      resolvedSlug = lcSol.url.split("/problems/")[1]?.split("/")[0];
-    }
 
     let details = null;
     if (resolvedSlug) {
@@ -1543,14 +1680,8 @@ exports.getProblemSolution = async (req, res) => {
     }
 
     if (curatedSol || lcSol || details) {
-      const codes = typeof lcSol?.code === "object" ? lcSol.code : { java: lcSol?.code || "" };
-      const lcRawCode = codes.java || codes.cpp || codes.python || "";
-
-      // Extract canonical LeetCode method name from official solution if available
-      const canonicalMethodName =
-        lcSol?.code?.java?.match(/(?:public|protected|private)?\s+[\w<>\[\]]+\s+(\w+)\s*\(/)?.[1] ||
-        lcSol?.code?.cpp?.match(/[\w<>:]+\s+(\w+)\s*\(/)?.[1] ||
-        null;
+      const codes = typeof lcSol?.code === "object" ? { ...lcSol.code } : { java: lcSol?.code || "" };
+      const lcRawCode = codes.java || codes.cpp || codes.python || codes.javascript || "";
 
       const approaches = [];
       if (curatedSol?.approaches?.length) {
@@ -1560,58 +1691,78 @@ exports.getProblemSolution = async (req, res) => {
       }
 
       if (approaches.length === 0) {
-        approaches.push({
-          name: "Optimal",
-          isLeetCode: true,
-          isTuf: false,
-          timeComplexity: formatComplexity(lcSol?.timeComplexity),
-          spaceComplexity: formatComplexity(lcSol?.spaceComplexity || "O(1)"),
-          intuition: lcSol?.explanation || "Optimized solution approach with linear complexity.",
-          code: lcRawCode,
-          codes: codes,
-          url: lcSol?.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : undefined),
-        });
-      } else {
-        // Find Optimal approach to guarantee official LeetCode accepted code
-        let optimalApp = approaches.find((a) => a.name?.toLowerCase().includes("optimal"));
-        if (!optimalApp && approaches.length > 0) {
-          optimalApp = approaches[approaches.length - 1];
+        // If there are no standalone curated approaches, provide Official approach if available
+        if (lcRawCode) {
+          approaches.push({
+            name: "★ Official",
+            isOfficial: true,
+            isLeetCode: true,
+            isTuf: false,
+            timeComplexity: formatComplexity(lcSol?.timeComplexity),
+            spaceComplexity: formatComplexity(lcSol?.spaceComplexity || "O(1)"),
+            intuition: lcSol?.explanation || "Official platform accepted solution matching the LeetCode judge method signature.",
+            code: lcRawCode,
+            codes: codes,
+            url: lcSol?.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : undefined),
+          });
         }
-
+      } else {
+        // Format educational approaches (Brute Force, Better, Optimal) — PRESERVE STANDALONE COMPILER CODE
         approaches.forEach((app) => {
           app.timeComplexity = formatComplexity(app.timeComplexity);
           app.spaceComplexity = formatComplexity(app.spaceComplexity || "O(1)");
-          const isOptimal = app === optimalApp || app.name?.toLowerCase().includes("optimal");
+          
           let appCodes = typeof app.codes === "object" && app.codes !== null
             ? { ...app.codes }
             : typeof app.code === "object" && app.code !== null
               ? { ...app.code }
               : { java: typeof app.code === "string" ? app.code : "" };
 
-          if (isOptimal && lcSol?.code && typeof lcSol.code === "object") {
-            // Guarantee 100% official accepted code on Optimal approach
-            if (lcSol.code.java) appCodes.java = lcSol.code.java;
-            if (lcSol.code.cpp) appCodes.cpp = lcSol.code.cpp;
-            if (lcSol.code.python) appCodes.python = lcSol.code.python;
-          } else {
-            // Standardize Brute Force & Better approaches for LeetCode
-            if (appCodes.java) appCodes.java = formatLeetCodeCode(appCodes.java, "java", canonicalMethodName);
-            if (appCodes.cpp) appCodes.cpp = formatLeetCodeCode(appCodes.cpp, "cpp", canonicalMethodName);
-            if (appCodes.python) appCodes.python = formatLeetCodeCode(appCodes.python, "python", canonicalMethodName);
-            if (!appCodes.python && lcSol?.code?.python) appCodes.python = lcSol.code.python;
-          }
+          // Clean out empty keys
+          Object.keys(appCodes).forEach((k) => {
+            if (!appCodes[k] || typeof appCodes[k] !== "string" || !appCodes[k].trim()) {
+              delete appCodes[k];
+            }
+          });
+
+          let appCode = (typeof app.code === "string" && app.code.trim())
+            ? app.code
+            : appCodes.java || "";
 
           app.codes = appCodes;
-          app.code = appCodes.java || appCodes.cpp || appCodes.python || "";
+          app.code = appCode;
           if (lcSol?.url && !app.url) app.url = lcSol.url;
         });
+
+        // Append 4th tab: "★ Official" ONLY if official platform solution is present
+        if (lcRawCode) {
+          const optimalApp = approaches.find((a) => a.name?.toLowerCase().includes("optimal")) || approaches[approaches.length - 1];
+          approaches.push({
+            name: "★ Official",
+            isOfficial: true,
+            isLeetCode: true,
+            timeComplexity: formatComplexity(lcSol?.timeComplexity || optimalApp?.timeComplexity),
+            spaceComplexity: formatComplexity(lcSol?.spaceComplexity || optimalApp?.spaceComplexity || "O(1)"),
+            intuition: lcSol?.explanation || "Official platform accepted solution matching the LeetCode judge method signature.",
+            code: lcRawCode,
+            codes: codes,
+            url: lcSol?.url || (resolvedSlug ? `https://leetcode.com/problems/${resolvedSlug}/` : undefined),
+          });
+        }
       }
 
+      // Dynamically merge isolated AI-generated C++ & Python into educational approaches
+      mergeAiLanguages(approaches, cleanKey || problemKey, resolvedSlug);
+
+      // Default code for editor: choose standalone Optimal first, or approaches[0]
+      const optimalApp = approaches.find((a) => a.name?.toLowerCase().includes("optimal") && !a.isOfficial);
       const defaultCode =
-        lcSol?.code?.java ||
-        lcSol?.code?.cpp ||
+        optimalApp?.codes?.java ||
+        optimalApp?.codes?.cpp ||
+        optimalApp?.code ||
         approaches[0]?.codes?.java ||
         approaches[0]?.codes?.cpp ||
+        approaches[0]?.code ||
         lcRawCode;
 
       return res.json({
@@ -1642,38 +1793,15 @@ exports.getProblemSolution = async (req, res) => {
         ? "Codeforces"
         : (nonLcProb.platform || (probUrl.includes("geeksforgeeks.org") ? "GeeksforGeeks" : "takeUforward"));
 
-      const tufCodes = {
-        cpp: `// Problem: ${probTitle}\n#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    return 0;\n}`,
-        java: `// Problem: ${probTitle}\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n    }\n}`,
-        python: `# Problem: ${probTitle}\nimport sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()`,
-        javascript: `// Problem: ${probTitle}\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim();\n\nfunction solve() {}\nsolve();`,
-      };
-
       const approaches = curatedSol?.approaches?.length
         ? curatedSol.approaches.filter(
           (app) => !["takeuforward", "tuf"].includes(app.name?.trim().toLowerCase())
         )
         : [];
 
-      if (approaches.length === 0) {
-        approaches.push({
-          name: "Optimal",
-          isLeetCode: false,
-          isTuf: !isCodeforces,
-          isCodeforces: isCodeforces,
-          platform: platformName,
-          timeComplexity: "O(N)",
-          spaceComplexity: "O(1)",
-          intuition: `Standard problem: "${probTitle}". Practice and solve using standard input/output.`,
-          code: tufCodes.cpp,
-          codes: tufCodes,
-          url: probUrl || undefined,
-        });
-      }
-
       return res.json({
         success: true,
-        hasNotes: true,
+        hasNotes: approaches.length > 0,
         title: probTitle,
         platform: platformName,
         platformUrl: probUrl,
@@ -1688,34 +1816,17 @@ exports.getProblemSolution = async (req, res) => {
     }
 
     const fallbackTitle = cleanKey || problemKey;
-    const starterCodes = {
-      java: `// Problem: ${fallbackTitle}\nimport java.util.*;\n\npublic class Solution {\n    public void solve() {\n        // Write solution here\n    }\n}`,
-      cpp: `// Problem: ${fallbackTitle}\n#include <iostream>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solve() {\n        // Write solution here\n    }\n};`,
-      python: `# Problem: ${fallbackTitle}\nclass Solution:\n    def solve(self):\n        pass`,
-      javascript: `// Problem: ${fallbackTitle}\nfunction solve() {\n    // Write solution here\n}`,
-    };
 
     return res.json({
       success: true,
       hasNotes: false,
       title: fallbackTitle,
-      problemStatement: `Solve the problem: "${fallbackTitle}".\nImplement and test your optimal algorithm directly in the compiler studio.`,
+      problemStatement: `Solve the problem: "${fallbackTitle}".`,
       examples: "",
       testCases: [],
-      approaches: [
-        {
-          name: "Optimal",
-          isLeetCode: false,
-          isTuf: false,
-          timeComplexity: "O(N)",
-          spaceComplexity: "O(1)",
-          intuition: `Formulate an optimal solution approach for "${fallbackTitle}". Evaluate time and space complexity constraints, handle edge conditions, and verify your logic against test cases.`,
-          code: starterCodes.java,
-          codes: starterCodes,
-        },
-      ],
+      approaches: [],
       leetcodeSolution: null,
-      defaultCode: starterCodes.java,
+      defaultCode: "",
     });
   } catch (error) {
     console.error("[Practice:getProblemSolution]", error.message);
@@ -1813,7 +1924,7 @@ exports.toggleProblemStatus = async (req, res) => {
           isSolved: true,
           alreadySolved: true,
           revisionDone: true,
-          message: "Already solved { Revision done }",
+          message: "Already solved",
           problemKey: normKey,
           totalSolved: solvedSet.size,
         });
@@ -1918,7 +2029,7 @@ exports.syncSubmission = async (req, res) => {
       success: true,
       alreadySolved: true,
       revisionDone: true,
-      message: "Already solved { Revision done }",
+      message: "Already solved",
       totalSolved: current?.solvedProblemKeys?.length || 0,
     });
   } catch (error) {
@@ -2098,6 +2209,123 @@ exports.deleteCustomSheet = async (req, res) => {
   } catch (error) {
     console.error("[Practice:deleteCustomSheet]", error.message);
     res.status(500).json({ success: false, message: "Failed to delete roadmap" });
+  }
+};
+
+exports.saveAiSolution = async (req, res) => {
+  try {
+    const { problemKey, slug, approachName, lang, code } = req.body;
+    if (!problemKey && !slug) {
+      return res.status(400).json({ success: false, message: "problemKey or slug is required" });
+    }
+    if (!approachName || !lang || !code) {
+      return res.status(400).json({ success: false, message: "approachName, lang (cpp/python), and code are required" });
+    }
+    const cleanLang = String(lang).toLowerCase().trim();
+    if (!["cpp", "python"].includes(cleanLang)) {
+      return res.status(400).json({ success: false, message: "AI standalone solutions can only be saved for cpp or python" });
+    }
+
+    const aiSolPath = path.join(dataDir, "ai-standalone-solutions.json");
+    let aiStore = {};
+    if (fs.existsSync(aiSolPath)) {
+      try {
+        aiStore = JSON.parse(fs.readFileSync(aiSolPath, "utf8"));
+      } catch (e) {
+        aiStore = {};
+      }
+    }
+
+    const targetKey = normalize(slug || problemKey);
+    if (!aiStore[targetKey]) {
+      aiStore[targetKey] = {};
+    }
+    if (!aiStore[targetKey][approachName]) {
+      aiStore[targetKey][approachName] = {};
+    }
+    aiStore[targetKey][approachName][cleanLang] = code;
+
+    fs.writeFileSync(aiSolPath, JSON.stringify(aiStore, null, 2), "utf8");
+    aiStandaloneSolutionsMap.set(targetKey, aiStore[targetKey]);
+
+    return res.json({
+      success: true,
+      message: `Saved ${cleanLang.toUpperCase()} for ${approachName} in isolated AI storage`,
+      targetKey,
+    });
+  } catch (error) {
+    console.error("[Practice:saveAiSolution]", error.message);
+    res.status(500).json({ success: false, message: "Failed to save AI solution" });
+  }
+};
+
+exports.generateAiSolution = async (req, res) => {
+  try {
+    const { problemKey, slug, title, approachName, lang, baseCode } = req.body;
+    if (!problemKey && !slug) {
+      return res.status(400).json({ success: false, message: "problemKey or slug is required" });
+    }
+    const cleanLang = String(lang || "").toLowerCase().trim();
+    if (!["cpp", "python"].includes(cleanLang)) {
+      return res.status(400).json({ success: false, message: "AI generation is only available for cpp or python" });
+    }
+
+    const billuAiService = require("../services/billuAiService");
+    const targetLangName = cleanLang === "cpp" ? "C++ (GCC)" : "Python 3";
+    const prompt = `You are an expert DSA programmer. Write a clean, optimal, standalone ${targetLangName} implementation for the approach "${approachName || "Optimal"}" for problem "${title || slug || problemKey}".
+${baseCode ? `Here is the reference Java code for logic reference:\n\`\`\`java\n${baseCode}\n\`\`\`\n` : ""}
+Requirements:
+1. Provide a COMPLETE, standalone, runnable solution in ${targetLangName}.
+2. Use standard competitive programming style (e.g. for C++, #include <iostream>, vector, etc., and int main() or standard input/output).
+3. Output ONLY the raw source code inside a single \`\`\`${cleanLang} ... \`\`\` code block. Do NOT include conversational explanations or extra commentary.`;
+
+    const reply = await billuAiService.chatWithBillu({
+      message: prompt,
+      customApiKey: req.body.customApiKey || null,
+    });
+
+    let extractedCode = reply;
+    const match = reply.match(new RegExp(`\`\`\`(?:${cleanLang}|c\\+\\+|cpp|python|py)?\\s*([\\s\\S]*?)\`\`\``, "i"));
+    if (match && match[1]?.trim()) {
+      extractedCode = match[1].trim();
+    } else {
+      extractedCode = extractedCode.replace(/```/g, "").trim();
+    }
+
+    // Save into isolated ai-standalone-solutions.json
+    const aiSolPath = path.join(dataDir, "ai-standalone-solutions.json");
+    let aiStore = {};
+    if (fs.existsSync(aiSolPath)) {
+      try {
+        aiStore = JSON.parse(fs.readFileSync(aiSolPath, "utf8"));
+      } catch (e) {
+        aiStore = {};
+      }
+    }
+
+    const targetKey = normalize(slug || problemKey);
+    if (!aiStore[targetKey]) {
+      aiStore[targetKey] = {};
+    }
+    const appKey = approachName || "Optimal";
+    if (!aiStore[targetKey][appKey]) {
+      aiStore[targetKey][appKey] = {};
+    }
+    aiStore[targetKey][appKey][cleanLang] = extractedCode;
+
+    fs.writeFileSync(aiSolPath, JSON.stringify(aiStore, null, 2), "utf8");
+    aiStandaloneSolutionsMap.set(targetKey, aiStore[targetKey]);
+
+    return res.json({
+      success: true,
+      code: extractedCode,
+      lang: cleanLang,
+      approachName: appKey,
+      targetKey,
+    });
+  } catch (error) {
+    console.error("[Practice:generateAiSolution]", error.message);
+    res.status(500).json({ success: false, message: "AI generation failed: " + error.message });
   }
 };
 

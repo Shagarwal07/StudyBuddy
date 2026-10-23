@@ -11,6 +11,8 @@ router.post("/enroll", practiceController.enrollSheet);
 router.post("/unenroll", practiceController.unenrollSheet);
 router.get("/sheet/:sheetId", practiceController.getSheetDetails);
 router.get("/solution/:problemKey", practiceSolutionLimiter, practiceController.getProblemSolution);
+router.post("/solution/save-ai", practiceController.saveAiSolution);
+router.post("/solution/generate-ai", practiceController.generateAiSolution);
 router.post("/toggle-status", practiceController.toggleProblemStatus);
 router.post("/toggle-starred", practiceController.toggleProblemStarred);
 router.post("/custom-sheet", practiceController.createCustomSheet);

@@ -465,7 +465,7 @@ export default function Practice() {
       const res = await api.post("/practice/toggle-status", payload);
       if (res.data.success) {
         if (res.data.alreadySolved) {
-          toast.info("Already solved { Revision done } 🔄");
+          toast.info("Already solved! 🔄");
         } else {
           toast.success("Problem marked as solved! 🎉");
           // Update local sheet details state
@@ -1179,7 +1179,7 @@ export default function Practice() {
                                 }`}
                                 title={
                                   prob.isSolved
-                                    ? "Already solved { Revision done } - Click to log revision"
+                                    ? "Already solved"
                                     : "Mark as solved"
                                 }
                               >

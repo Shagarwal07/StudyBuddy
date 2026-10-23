@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import { highlightCode } from "../../utils/codeHighlighter";
 
 const DEFAULT_TEMPLATES = {
   java: (title, isCp = false) =>
@@ -95,7 +96,7 @@ class Solution:
     pass`,
 
   javascript: (title) => `// Problem: ${title || "Solution"}
-// LeetCode Solution
+// LeetCode Solution Template
 
 /**
  * @return {*}
@@ -114,10 +115,17 @@ const getStarterTemplate = (lang, title = "", platformName = "LeetCode") => {
 const getApproachCode = (app, lang) => {
   if (!app) return "";
   const codes = typeof app.codes === "object" ? app.codes : typeof app.code === "object" ? app.code : null;
-  if (codes) {
-    return codes[lang] || codes.cpp || codes.java || codes.python || codes.javascript || Object.values(codes)[0] || "";
+  if (codes && lang) {
+    const val = codes[lang];
+    if (val && typeof val === "string" && val.trim().length > 0) {
+      return val;
+    }
+    return "";
   }
-  return typeof app.code === "string" ? app.code : "";
+  if (typeof app.code === "string" && app.code.trim().length > 0) {
+    return app.code;
+  }
+  return "";
 };
 
 const LANG_LABELS = {
@@ -132,7 +140,6 @@ const LANGUAGE_OPTIONS = [
   { value: "java", label: "Java 21" },
   { value: "cpp", label: "C++ (GCC)" },
   { value: "python", label: "Python 3.12" },
-  { value: "javascript", label: "Node.js 20" },
 ];
 
 const formatComplexity = (val, defaultVal = "O(1)") => {
@@ -288,7 +295,7 @@ const renderFormattedRichText = (rawText) => {
       return (
         <code
           key={idx}
-          className="mx-0.5 px-1.5 py-0.5 rounded bg-neutral-800/80 text-amber-200/90 font-mono text-[11.5px] border border-neutral-700/60 shadow-xs inline-block align-baseline"
+          className="font-mono text-amber-300/90 font-medium px-0.5"
         >
           {code}
         </code>
@@ -319,11 +326,11 @@ export default function StufuModal({
   isOpen,
   onClose,
   problem,
-  initialShowSolution = false,
+  initialShowSolution = true,
   onProblemSolved,
   onProblemRevert,
 }) {
-  const [showSolution, setShowSolution] = useState(initialShowSolution);
+  const [showSolution, setShowSolution] = useState(true);
   const [splitRatio, setSplitRatio] = useState(42); // 42% left, 58% right
   const [isDragging, setIsDragging] = useState(false);
   const [editorHeightPercent, setEditorHeightPercent] = useState(58); // 58% editor, 42% console
@@ -345,10 +352,12 @@ export default function StufuModal({
   const [runResult, setRunResult] = useState(null);
   const activeConsoleTab = "output";
   const [selectedTestCaseIndex, setSelectedTestCaseIndex] = useState(0);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   const containerRef = useRef(null);
   const rightPanelSplitRef = useRef(null);
   const textareaRef = useRef(null);
+  const highlightRef = useRef(null);
   const lineNumbersRef = useRef(null);
   const langDropdownRef = useRef(null);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
@@ -402,10 +411,10 @@ export default function StufuModal({
     return "LeetCode";
   }, [problem, solutionData]);
 
-  // Initialize editor code with clean starter template when modal opens with a problem
+  // Initialize editor code when modal opens with a problem
   useEffect(() => {
     if (isOpen && problem) {
-      setCode(getStarterTemplate(language, problem.title, currentPlatformName));
+      setCode("");
       setRunResult(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -443,32 +452,36 @@ export default function StufuModal({
           const res = await api.get(`/practice/solution/${encodeURIComponent(problem.title || problem.key)}${qs}`);
           if (isMounted && res.data.success) {
             setSolutionData(res.data);
-            // Default approach tab to Optimal in editorial guide
+            // Default approach: Official tab if present, else Optimal
             if (res.data.approaches && res.data.approaches.length > 0) {
               const cleanApproaches = res.data.approaches.filter(
                 (a) => !["takeuforward", "tuf"].includes(a.name?.trim().toLowerCase())
               );
               const list = cleanApproaches.length > 0 ? cleanApproaches : res.data.approaches;
-              const optimalIdx = list.findIndex(
-                (a) => a.name?.toLowerCase().includes("optimal")
+              const officialIdx = list.findIndex(
+                (a) => a.isOfficial || a.name?.includes("★") || a.name?.toLowerCase().includes("official")
               );
-              const targetIdx = optimalIdx !== -1 ? optimalIdx : 0;
+              const optimalIdx = list.findIndex(
+                (a) => a.name?.toLowerCase().includes("optimal") && !a.isOfficial && !a.name?.includes("★")
+              );
+              const targetIdx = officialIdx !== -1 ? officialIdx : (optimalIdx !== -1 ? optimalIdx : 0);
               setActiveApproachTab(targetIdx);
 
-              // Automatically load the Optimal approach code directly into the compiler editor
-              const optApp = list[targetIdx];
-              const optCode =
-                getApproachCode(optApp, language) ||
-                getApproachCode(optApp, "java") ||
-                getApproachCode(optApp, "cpp") ||
-                "";
-              if (optCode) {
-                setCode(optCode);
-                if (optApp.code?.java && !optApp.code?.[language]) {
-                  setLanguage("java");
-                } else if (optApp.code?.cpp && !optApp.code?.[language]) {
-                  setLanguage("cpp");
-                }
+              const targetApp = list[targetIdx];
+              const isOfficial = Boolean(
+                targetApp.isOfficial || targetApp.name?.includes("★") || targetApp.name?.toLowerCase().includes("official")
+              );
+              const codes = targetApp.codes || (typeof targetApp.code === "object" ? targetApp.code : null) || {};
+
+              if (isOfficial) {
+                const availKeys = Object.keys(codes).filter((k) => typeof codes[k] === "string" && codes[k].trim().length > 0);
+                const targetLang = availKeys[0] || "java";
+                setLanguage(targetLang);
+                setCode(codes[targetLang] || (typeof targetApp.code === "string" ? targetApp.code : ""));
+              } else {
+                setLanguage("java");
+                const javaCode = codes.java || (typeof targetApp.code === "string" ? targetApp.code : "");
+                setCode(javaCode || "");
               }
             }
           }
@@ -486,7 +499,7 @@ export default function StufuModal({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, problemKey, problem?.leetcodeSlug, problem?.platform, problem?.tufHref]);
 
-    // Computed curated approaches with fallback to ensure editorial tab is always present and interactive
+    // Curated approaches from solutionData without fake fallback injections
     const approaches = useMemo(() => {
       const raw = solutionData?.approaches || [];
       const filtered = raw.filter(
@@ -500,40 +513,36 @@ export default function StufuModal({
             : app
         );
       }
-      return [
-        {
-          name: "Optimal",
-          timeComplexity: "O(N)",
-          spaceComplexity: "O(1)",
-          intuition:
-            solutionData?.problemStatement ||
-            `Analyze the core patterns, constraints, and edge cases for "${problem?.title || "this problem"}". Formulate the optimal approach and test your solution.`,
-          code: solutionData?.defaultCode || "",
-          codes: {
-            java: solutionData?.defaultCode || "",
-          },
-        },
-      ];
-    }, [solutionData?.approaches, solutionData?.problemStatement, solutionData?.defaultCode, problem?.title]);
+      return [];
+    }, [solutionData?.approaches]);
 
     // Handle approach selection from tabs — updates editorial AND loads code into compiler
     const handleSelectApproach = (idx) => {
       setActiveApproachTab(idx);
       const targetApp = approaches[idx];
-      if (targetApp) {
-        const targetCode =
-          getApproachCode(targetApp, language) ||
-          getApproachCode(targetApp, "java") ||
-          getApproachCode(targetApp, "cpp") ||
-          "";
-        if (targetCode) {
+      if (!targetApp) return;
+
+      const isOfficial = Boolean(
+        targetApp.isOfficial || targetApp.name?.includes("★") || targetApp.name?.toLowerCase().includes("official")
+      );
+      const codes = targetApp.codes || (typeof targetApp.code === "object" ? targetApp.code : null) || {};
+
+      if (isOfficial) {
+        const availKeys = Object.keys(codes).filter((k) => typeof codes[k] === "string" && codes[k].trim().length > 0);
+        const nextLang = availKeys.includes(language) ? language : (availKeys[0] || "java");
+        setLanguage(nextLang);
+        setCode(codes[nextLang] || (typeof targetApp.code === "string" ? targetApp.code : ""));
+      } else {
+        // 3-tier approach: strictly Java, C++, Python
+        const valid3Tier = ["java", "cpp", "python"];
+        const nextLang = valid3Tier.includes(language) ? language : "java";
+        setLanguage(nextLang);
+        const targetCode = codes[nextLang];
+        if (targetCode && typeof targetCode === "string" && targetCode.trim().length > 0) {
           setCode(targetCode);
-          const codes = targetApp.codes || (typeof targetApp.code === "object" ? targetApp.code : null);
-          if (codes?.java && !codes?.[language]) {
-            setLanguage("java");
-          } else if (codes?.cpp && !codes?.[language]) {
-            setLanguage("cpp");
-          }
+        } else {
+          // Zero fallback!
+          setCode("");
         }
       }
     };
@@ -543,14 +552,98 @@ export default function StufuModal({
       setLanguage(newLang);
       const activeApp = approaches[activeApproachTab];
       if (activeApp) {
-        const appCode = getApproachCode(activeApp, newLang);
-        if (appCode) {
+        const codes = activeApp.codes || (typeof activeApp.code === "object" ? activeApp.code : null) || {};
+        const appCode = codes[newLang];
+        if (appCode && typeof appCode === "string" && appCode.trim().length > 0) {
           setCode(appCode);
           return;
         }
       }
-      setCode(getStarterTemplate(newLang, problem?.title, currentPlatformName));
+      setCode("");
     };
+
+    // Generate standalone C++ or Python code via Billu AI
+    const handleGenerateAi = async (approachName, langToGen) => {
+      if (isGeneratingAi) return;
+      setIsGeneratingAi(true);
+      try {
+        const activeApp = approaches[activeApproachTab];
+        const baseJavaCode = activeApp?.codes?.java || "";
+        const res = await api.post("/practice/solution/generate-ai", {
+          problemKey,
+          slug: problem?.leetcodeSlug,
+          title: problem?.title,
+          approachName: approachName || activeApp?.name || "Optimal",
+          lang: langToGen,
+          baseCode: baseJavaCode,
+        });
+
+        if (res.data?.success && res.data.code) {
+          toast.success(`${LANG_LABELS[langToGen] || langToGen} solution generated!`);
+          setSolutionData((prev) => {
+            if (!prev) return prev;
+            const updatedApps = (prev.approaches || []).map((app) => {
+              if (
+                app.name === approachName ||
+                (app.name?.toLowerCase().includes("optimal") && approachName?.toLowerCase().includes("optimal")) ||
+                (app.name?.toLowerCase().includes("better") && approachName?.toLowerCase().includes("better")) ||
+                (app.name?.toLowerCase().includes("brute") && approachName?.toLowerCase().includes("brute"))
+              ) {
+                return {
+                  ...app,
+                  codes: {
+                    ...(app.codes || {}),
+                    [langToGen]: res.data.code,
+                  },
+                };
+              }
+              return app;
+            });
+            return { ...prev, approaches: updatedApps };
+          });
+          if (language === langToGen) {
+            setCode(res.data.code);
+          }
+          if (refLanguage === langToGen) {
+            setRefLanguage(langToGen);
+          }
+        } else {
+          toast.error(res.data?.message || "Failed to generate solution.");
+        }
+      } catch (err) {
+        console.error("AI generation error:", err);
+        toast.error(err.response?.data?.message || "Failed to generate solution.");
+      } finally {
+        setIsGeneratingAi(false);
+      }
+    };
+
+    // Dynamic compiler language options: dynamic for official, standard for 3-tier
+    const currentLanguageOptions = useMemo(() => {
+      const activeApp = approaches[activeApproachTab];
+      const isOfficial = Boolean(
+        activeApp?.isOfficial || activeApp?.name?.includes("★") || activeApp?.name?.toLowerCase().includes("official")
+      );
+
+      if (isOfficial && activeApp) {
+        const codes = activeApp.codes || (typeof activeApp.code === "object" ? activeApp.code : null) || {};
+        const availableKeys = Object.keys(codes).filter(
+          (k) => typeof codes[k] === "string" && codes[k].trim().length > 0
+        );
+        if (availableKeys.length > 0) {
+          return availableKeys.map((k) => ({
+            value: k,
+            label: LANG_LABELS[k] || k.toUpperCase(),
+          }));
+        }
+      }
+
+      return [
+        { value: "java", label: "Java 21" },
+        { value: "cpp", label: "C++ (GCC)" },
+        { value: "python", label: "Python 3.12" },
+      ];
+    }, [approaches, activeApproachTab]);
 
     // Draggable divider handlers
     const handleMouseDown = useCallback((e) => {
@@ -632,12 +725,17 @@ export default function StufuModal({
       }
     };
 
-    // Sync line numbers scroll
+    // Sync line numbers and syntax highlight layer scroll
     const handleEditorScroll = () => {
       if (textareaRef.current) {
         const top = textareaRef.current.scrollTop;
+        const left = textareaRef.current.scrollLeft;
         if (lineNumbersRef.current) {
           lineNumbersRef.current.scrollTop = top;
+        }
+        if (highlightRef.current) {
+          highlightRef.current.scrollTop = top;
+          highlightRef.current.scrollLeft = left;
         }
       }
     };
@@ -673,9 +771,15 @@ export default function StufuModal({
       try {
         let codeToCopy = code;
         if (currentPlatformName === "LeetCode") {
-          codeToCopy = codeToCopy
-            .replace(/public\s+class\s+Main\b/g, "class Solution")
-            .replace(/class\s+Main\b/g, "class Solution");
+          const officialApp = approaches.find((a) => a.isOfficial || a.name?.includes("★"));
+          const officialCode = officialApp ? getApproachCode(officialApp, language) : "";
+          if (officialCode && (codeToCopy.includes("public class Main") || codeToCopy.includes("class Main") || !codeToCopy.includes("class Solution"))) {
+            codeToCopy = officialCode;
+          } else {
+            codeToCopy = codeToCopy
+              .replace(/public\s+class\s+Main\b/g, "class Solution")
+              .replace(/class\s+Main\b/g, "class Solution");
+          }
         }
         await navigator.clipboard.writeText(codeToCopy);
         toast.success(`📋 Solution copied! Opening ${currentPlatformName}...`);
@@ -687,12 +791,12 @@ export default function StufuModal({
       window.open(targetUrl, "_blank");
     };
 
-    // Toggle problem solved state locally & in database or suggest already solved { Revision done }
+    // Toggle problem solved state locally & in database or suggest already solved
     const handleToggleSolved = async () => {
       if (!problem) return;
       const probKey = problem.key || String(problem.id) || problem.title;
       if (isProblemSolved) {
-        toast.info("Already solved { Revision done } 🔄");
+        toast.info("Already solved! 🔄");
         onProblemSolved?.(probKey, problem);
         return;
       }
@@ -721,6 +825,9 @@ export default function StufuModal({
     }, [code]);
 
     const rawApproach = approaches[activeApproachTab] || approaches[0] || null;
+    const isOfficialActive = Boolean(
+      rawApproach?.isOfficial || rawApproach?.name?.includes("★") || rawApproach?.name?.toLowerCase().includes("official")
+    );
 
     // Extract all available language implementations for the active approach
     const approachCodes = useMemo(() => {
@@ -733,35 +840,38 @@ export default function StufuModal({
       }
       if (typeof rawApproach.code === "string" && rawApproach.code.trim()) {
         const s = rawApproach.code;
-        let detected = "code";
+        let detected = "java";
         if (s.includes("#include") || s.includes("using namespace std;")) detected = "cpp";
         else if (s.includes("import java") || s.includes("public class") || s.includes("class Solution {")) detected = "java";
         else if (s.includes("def ") || s.includes("import sys") || s.includes("print(")) detected = "python";
-        else if (s.includes("function ") || s.includes("const ") || s.includes("console.log")) detected = "javascript";
+        else if (s.includes("var ") || s.includes("function ") || s.includes("const ")) detected = "javascript";
         return { [detected]: s };
       }
       return {};
     }, [rawApproach]);
 
     const availableRefLangs = useMemo(() => {
-      return Object.keys(approachCodes).filter((k) => Boolean(approachCodes[k]?.trim()));
-    }, [approachCodes]);
+      if (isOfficialActive) {
+        return Object.keys(approachCodes).filter((k) => Boolean(approachCodes[k]?.trim()));
+      }
+      return ["java", "cpp", "python"];
+    }, [isOfficialActive, approachCodes]);
 
     const activeRefLang = useMemo(() => {
-      if (refLanguage && approachCodes[refLanguage]) {
+      if (refLanguage && (isOfficialActive ? approachCodes[refLanguage] : ["java", "cpp", "python"].includes(refLanguage))) {
         return refLanguage;
       }
-      const priority = ["java", "cpp", "python", "javascript"];
-      for (const p of priority) {
-        if (approachCodes[p]) return p;
+      if (isOfficialActive) {
+        const priority = ["java", "cpp", "python", "javascript"];
+        for (const p of priority) {
+          if (approachCodes[p]) return p;
+        }
+        return availableRefLangs[0] || "java";
       }
-      return availableRefLangs[0] || "code";
-    }, [refLanguage, approachCodes, availableRefLangs]);
+      return "java";
+    }, [refLanguage, approachCodes, isOfficialActive, availableRefLangs]);
 
-    const activeApproachCode =
-      approachCodes[activeRefLang] ||
-      (typeof rawApproach?.code === "string" ? rawApproach.code : "") ||
-      "";
+    const activeApproachCode = approachCodes[activeRefLang] || "";
 
     const activeApproach = rawApproach
       ? {
@@ -774,6 +884,15 @@ export default function StufuModal({
         spaceComplexity: "O(1)",
         code: solutionData?.defaultCode || code,
       };
+
+    // Memoized colorful syntax highlighting for editor & reference code
+    const highlightedEditorCode = useMemo(() => {
+      return highlightCode(code, language);
+    }, [code, language]);
+
+    const highlightedRefCode = useMemo(() => {
+      return highlightCode(activeApproachCode, activeRefLang);
+    }, [activeApproachCode, activeRefLang]);
 
     if (!isOpen || !problem) return null;
 
@@ -844,20 +963,6 @@ export default function StufuModal({
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Toggle Solution Sheet Button */}
-              <button
-                type="button"
-                onClick={() => setShowSolution((prev) => !prev)}
-                className={`shrink-0 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 cursor-pointer border ${showSolution
-                    ? "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/20"
-                    : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:text-white hover:border-neutral-700"
-                  }`}
-                title={showSolution ? "Hide Solution Sheet" : "Open Curated Solution Sheet"}
-              >
-                <BookOpen className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                <span>{showSolution ? "Hide Solution" : "View Solution"}</span>
-              </button>
-
               {/* Custom Dark Theme Language Selector Dropdown */}
               <div ref={langDropdownRef} className="relative shrink-0">
                 <button
@@ -866,13 +971,13 @@ export default function StufuModal({
                   className="no-chamfer bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-neutral-200 outline-none focus:border-red-500 transition cursor-pointer flex items-center gap-1.5 shadow-sm"
                   title="Change compiler language"
                 >
-                  <span>{LANGUAGE_OPTIONS.find((l) => l.value === language)?.label || "Java 21"}</span>
+                  <span>{currentLanguageOptions.find((l) => l.value === language)?.label || LANG_LABELS[language] || language.toUpperCase()}</span>
                   <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-150 ${isLangDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {isLangDropdownOpen && (
                   <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 w-36 bg-[#121215] border border-neutral-800 rounded-lg shadow-2xl py-1 z-50 font-mono text-xs overflow-hidden backdrop-blur-md">
-                    {LANGUAGE_OPTIONS.map((opt) => {
+                    {currentLanguageOptions.map((opt) => {
                       const isSelected = language === opt.value;
                       return (
                         <button
@@ -934,16 +1039,13 @@ export default function StufuModal({
                 }`}
                 title={
                   isProblemSolved
-                    ? "Already solved { Revision done } - Click to log revision"
+                    ? "Problem is solved"
                     : "Mark this problem as completed"
                 }
               >
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">
-                  {isProblemSolved ? "Solved {Revision done}" : "Mark Solved"}
-                </span>
-                <span className="sm:hidden">
-                  {isProblemSolved ? "{Revision done}" : "Solved"}
+                <span>
+                  {isProblemSolved ? "Solved" : "Mark Solved"}
                 </span>
               </button>
 
@@ -986,8 +1088,13 @@ export default function StufuModal({
                     {approaches.length > 0 ? (
                       approaches.map((app, idx) => {
                         const isTabActive = activeApproachTab === idx;
-                        const isOptimal = app.name?.toLowerCase().includes("optimal");
-                        const isBetter = app.name?.toLowerCase().includes("better");
+                        const isOfficial = Boolean(
+                          app.isOfficial ||
+                          app.name?.includes("★") ||
+                          app.name?.toLowerCase().includes("official")
+                        );
+                        const isOptimal = !isOfficial && app.name?.toLowerCase().includes("optimal");
+                        const isBetter = !isOfficial && app.name?.toLowerCase().includes("better");
 
                         return (
                           <button
@@ -995,19 +1102,25 @@ export default function StufuModal({
                             type="button"
                             onClick={() => handleSelectApproach(idx)}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${isTabActive
-                                ? isOptimal
-                                  ? "bg-red-500/15 text-red-400 border border-red-500/30 shadow-sm"
-                                  : isBetter
-                                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm"
-                                    : "bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-sm"
-                                : "text-neutral-400 hover:text-neutral-200 border border-transparent"
+                                ? isOfficial
+                                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
+                                  : isOptimal
+                                    ? "bg-red-500/15 text-red-400 border border-red-500/30 shadow-sm"
+                                    : isBetter
+                                      ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-sm"
+                                      : "bg-purple-500/15 text-purple-300 border border-purple-500/30 shadow-sm"
+                                : isOfficial
+                                  ? "text-amber-400/80 hover:text-amber-200 hover:bg-amber-500/10 border border-transparent"
+                                  : "text-neutral-400 hover:text-neutral-200 border border-transparent"
                               }`}
                           >
-                            <span>{app.name}</span>
-                            {isOptimal && (
-                              <span className="text-[10px] px-1 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/30">
-                                ★
+                            {isOfficial ? (
+                              <span className="flex items-center gap-1.5 font-medium">
+                                <span className="text-amber-400 font-bold">★</span>
+                                <span>Official</span>
                               </span>
+                            ) : (
+                              <span>{app.name}</span>
                             )}
                           </button>
                         );
@@ -1133,23 +1246,13 @@ export default function StufuModal({
                       <div className="bg-neutral-900/60 border border-neutral-800 rounded-xl p-3.5">
                         <div className="flex items-center justify-between mb-2 gap-2">
                           <h3 className="text-xs font-semibold text-neutral-200 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                            <Sparkles className="w-3.5 h-3.5 text-red-400" />
-                            <span>{activeApproach.name} Intuition & Logic</span>
+                            <Sparkles className={`w-3.5 h-3.5 ${activeApproach.isOfficial || activeApproach.name?.includes("★") ? "text-amber-400" : "text-red-400"}`} />
+                            <span>
+                              {activeApproach.isOfficial || activeApproach.name?.includes("★")
+                                ? "Official Platform Solution Intuition"
+                                : `${activeApproach.name} Intuition & Logic`}
+                            </span>
                           </h3>
-                          {activeApproach.url && (
-                            <a
-                              href={activeApproach.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition flex items-center gap-1.5 shrink-0 border ${getPlatformDisplay(activeApproach.url, problem?.platform || solutionData?.platform).style
-                                }`}
-                            >
-                              <span>
-                                {getPlatformDisplay(activeApproach.url, problem?.platform || solutionData?.platform).label}
-                              </span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
                         </div>
                         <div className="text-neutral-300 leading-relaxed whitespace-pre-line text-xs">
                           {renderFormattedRichText(formatIntuition(activeApproach.intuition))}
@@ -1162,8 +1265,12 @@ export default function StufuModal({
                         <div className="bg-neutral-900 border-b border-neutral-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
-                              <Code2 className="w-3.5 h-3.5 text-red-400" />
-                              <span>{activeApproach.name} Implementation</span>
+                              <Code2 className={`w-3.5 h-3.5 ${activeApproach.isOfficial || activeApproach.name?.includes("★") ? "text-amber-400" : "text-red-400"}`} />
+                              <span>
+                                {activeApproach.isOfficial || activeApproach.name?.includes("★")
+                                  ? "Official Solution"
+                                  : `${activeApproach.name} Implementation`}
+                              </span>
                             </span>
 
                             {/* Language Selection Pills */}
@@ -1194,48 +1301,65 @@ export default function StufuModal({
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1.5">
+                          {Boolean(activeApproachCode) && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleCopySolution(activeApproachCode)}
+                                className="no-chamfer px-2.5 py-1 rounded text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition cursor-pointer flex items-center gap-1.5 text-[11px]"
+                                title="Copy code"
+                              >
+                                {copiedCode ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span className="text-emerald-400 font-medium">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                              <span className="text-neutral-700 select-none">|</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCode(activeApproachCode);
+                                  if (["java", "cpp", "python", "javascript"].includes(activeRefLang)) {
+                                    setLanguage(activeRefLang);
+                                  }
+                                }}
+                                className="no-chamfer px-2.5 py-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
+                                title="Load into compiler editor"
+                              >
+                                <span>Load into Compiler</span>
+                                <span>→</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {activeApproachCode ? (
+                          <pre
+                            className="p-3 font-mono text-[11px] overflow-x-auto leading-5 max-h-80 whitespace-pre selection:bg-red-500/30"
+                            style={{ tabSize: 4, MozTabSize: 4 }}
+                            dangerouslySetInnerHTML={{ __html: highlightedRefCode }}
+                          />
+                        ) : (
+                          <div className="p-8 flex flex-col items-center justify-center text-center space-y-3 bg-[#0E0E12]">
+                            <p className="text-xs text-neutral-400">
+                              No {LANG_LABELS[activeRefLang] || activeRefLang} solution available for {activeApproach.name} yet.
+                            </p>
                             <button
                               type="button"
-                              onClick={() => handleCopySolution(activeApproachCode)}
-                              className="no-chamfer px-2.5 py-1 rounded text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition cursor-pointer flex items-center gap-1.5 text-[11px]"
-                              title="Copy code"
+                              onClick={() => handleGenerateAi(activeApproach.name, activeRefLang)}
+                              disabled={isGeneratingAi}
+                              className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-medium transition cursor-pointer disabled:opacity-50"
                             >
-                              {copiedCode ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span className="text-emerald-400 font-medium">Copied</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3.5 h-3.5" />
-                                  <span>Copy</span>
-                                </>
-                              )}
-                            </button>
-                            <span className="text-neutral-700 select-none">|</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCode(activeApproachCode);
-                                if (["java", "cpp", "python", "javascript"].includes(activeRefLang)) {
-                                  setLanguage(activeRefLang);
-                                }
-                              }}
-                              className="no-chamfer px-2.5 py-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
-                              title="Load into compiler editor"
-                            >
-                              <span>Load into Compiler</span>
-                              <span>→</span>
+                              {isGeneratingAi ? "Generating with Billu AI..." : "Generate with Billu AI"}
                             </button>
                           </div>
-                        </div>
-                        <pre
-                          className="p-3 font-mono text-[11px] text-neutral-200 overflow-x-auto leading-5 max-h-80 whitespace-pre selection:bg-red-500/30"
-                          style={{ tabSize: 4, MozTabSize: 4 }}
-                        >
-                          {activeApproachCode}
-                        </pre>
+                        )}
                       </div>
                     </>
                   )}
@@ -1314,40 +1438,72 @@ export default function StufuModal({
                 ref={rightPanelSplitRef}
                 className="flex-1 flex flex-col min-h-0 overflow-hidden relative"
               >
-                {/* Code Editor Body with Line Numbers */}
+                {/* Code Editor Body with Line Numbers or Missing State */}
                 <div
                   style={{ height: `${editorHeightPercent}%` }}
                   className={`flex overflow-hidden relative font-mono text-xs min-h-0 shrink-0 ${isDraggingVertical ? "select-none pointer-events-none" : "select-text"
                     }`}
                 >
-                  {/* Line Numbers Gutter */}
-                  <div
-                    ref={lineNumbersRef}
-                    data-stufu-gutter="true"
-                    className="w-12 bg-[#0E0E12] text-neutral-600 border-r border-neutral-800 select-none py-3 text-right pr-3 font-mono leading-5 overflow-hidden shrink-0"
-                  >
-                    {Array.from({ length: lineCount }).map((_, i) => (
-                      <div key={i}>{i + 1}</div>
-                    ))}
-                  </div>
+                  {!code && !approachCodes[language] && !isOfficialActive ? (
+                    <div className="flex-1 h-full flex flex-col items-center justify-center p-8 text-center text-neutral-400 space-y-3 bg-[#0E0E12]">
+                      <p className="text-xs">No {LANG_LABELS[language] || language} solution available for {activeApproach?.name || "this approach"} yet.</p>
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateAi(activeApproach?.name || "Optimal", language)}
+                        disabled={isGeneratingAi}
+                        className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-medium transition cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingAi ? "Generating with Billu AI..." : "Generate with Billu AI"}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Line Numbers Gutter */}
+                      <div
+                        ref={lineNumbersRef}
+                        data-stufu-gutter="true"
+                        className="w-12 bg-[#0E0E12] text-neutral-600 border-r border-neutral-800 select-none py-3 text-right pr-3 font-mono leading-5 overflow-hidden shrink-0"
+                      >
+                        {Array.from({ length: lineCount }).map((_, i) => (
+                          <div key={i}>{i + 1}</div>
+                        ))}
+                      </div>
 
-                  {/* Editor Container */}
-                  <div data-stufu-body="true" className="flex-1 relative h-full overflow-hidden bg-[#0E0E12]">
-                    <textarea
-                      ref={textareaRef}
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      onScroll={handleEditorScroll}
-                      spellCheck={false}
-                      autoCapitalize="off"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      placeholder="Write your code solution here..."
-                      style={{ tabSize: 4, MozTabSize: 4 }}
-                      className="absolute inset-0 w-full h-full p-3 font-mono text-xs leading-5 outline-none resize-none overflow-auto whitespace-pre m-0 border-0 bg-transparent text-neutral-100 placeholder:text-neutral-500 caret-white selection:bg-red-500/30 selection:text-white"
-                    />
-                  </div>
+                      {/* Editor Container */}
+                      <div data-stufu-body="true" className="flex-1 relative h-full overflow-hidden bg-[#0E0E12]">
+                        {/* Colorful Syntax-Highlighted Layer */}
+                        <pre
+                          ref={highlightRef}
+                          aria-hidden="true"
+                          className="absolute inset-0 w-full h-full p-3 font-mono text-xs leading-5 overflow-hidden whitespace-pre m-0 border-0 pointer-events-none select-none bg-transparent"
+                          style={{ tabSize: 4, MozTabSize: 4 }}
+                          dangerouslySetInnerHTML={{ __html: highlightedEditorCode + (code.endsWith("\n") ? "\n " : "") }}
+                        />
+
+                        {/* Interactive Transparent Textarea on Top */}
+                        <textarea
+                          ref={textareaRef}
+                          value={code}
+                          onChange={(e) => setCode(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          onScroll={handleEditorScroll}
+                          spellCheck={false}
+                          autoCapitalize="off"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          placeholder="Write your code solution here..."
+                          style={{
+                            tabSize: 4,
+                            MozTabSize: 4,
+                            color: "transparent",
+                            WebkitTextFillColor: "transparent",
+                            backgroundColor: "transparent",
+                          }}
+                          className="no-chamfer absolute inset-0 w-full h-full p-3 font-mono text-xs leading-5 outline-none resize-none overflow-auto whitespace-pre m-0 border-0 bg-transparent text-transparent caret-white selection:bg-red-500/35 selection:text-transparent placeholder:text-neutral-500"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* VERTICAL DRAGGABLE RESIZER DIVIDER */}
@@ -1469,7 +1625,7 @@ export default function StufuModal({
                                   <Award className="w-4 h-4 text-emerald-400 shrink-0" />
                                   <span>
                                     {isProblemSolved
-                                      ? "Already solved { Revision done } 🔥"
+                                      ? "Already solved! 🔥"
                                       : "Problem marked as SOLVED in your dashboard & streak updated! 🔥"}
                                   </span>
                                 </div>
