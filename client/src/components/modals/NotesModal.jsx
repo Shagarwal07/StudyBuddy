@@ -1,8 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
-import { Clock, Plus, Trash2, Edit2, Play, Save, X } from "lucide-react";
+import {
+  Clock,
+  Play,
+  X,
+  Loader2,
+  Cpu,
+  Copy,
+  BookOpen,
+  Layers,
+  CheckCircle2,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  ArrowRight,
+} from "lucide-react";
 import api from "../../api/axios";
 import formatTime from "../../utils/formatTime";
+import NoteRenderer from "../notes/NoteRenderer";
 
 export default function NotesModal({
   isOpen,
@@ -12,153 +28,119 @@ export default function NotesModal({
   onSeekTimestamp,
   onNotesSaved,
 }) {
-  const [activeTab, setActiveTab] = useState("timestamps"); // 'timestamps' | 'general'
-  const [timestampNotes, setTimestampNotes] = useState([]);
-  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [activeTab, setActiveTab] = useState("roadmap"); // 'roadmap' | 'fullguide'
+  const [studyGuide, setStudyGuide] = useState(null);
+  const [loadingGuide, setLoadingGuide] = useState(false);
+  const [generatingGuide, setGeneratingGuide] = useState(false);
+  const [generatingModuleIndex, setGeneratingModuleIndex] = useState(null);
+  const [expandedModuleIndex, setExpandedModuleIndex] = useState(null);
+  const [copied, setCopied] = useState(false);
 
-  // New Note state
-  const [newNoteText, setNewNoteText] = useState("");
-  const [currentTimestamp, setCurrentTimestamp] = useState(0);
-  const [savingNote, setSavingNote] = useState(false);
+  // 1. Instant Cache Hookup: Query global knowledge cache (<50ms)
+  const fetchGlobalGuide = useCallback(async (ytId) => {
+    if (!ytId) return;
 
-  // Edit Note state
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [editingText, setEditingText] = useState("");
-
-  // General text notes state
-  const [generalNotesText, setGeneralNotesText] = useState("");
-  const [savingGeneral, setSavingGeneral] = useState(false);
-
-  const fetchNotes = useCallback(async () => {
-    if (!video?._id) return;
     try {
-      setLoadingNotes(true);
-      const res = await api.get(`/videos/${video._id}/notes`);
-      setTimestampNotes(res.data.notes || []);
+      setLoadingGuide(true);
+      const res = await api.get(`/videos/guide/${ytId}`);
+      if (res.data?.guide) {
+        setStudyGuide(res.data.guide);
+      } else {
+        setStudyGuide(null);
+      }
     } catch (err) {
-      console.error("[Fetch Timestamp Notes]", err.message);
+      console.warn("[NotesModal] Cache fetch notice:", err.message);
+      setStudyGuide(null);
     } finally {
-      setLoadingNotes(false);
+      setLoadingGuide(false);
     }
-  }, [video]);
+  }, []);
 
   useEffect(() => {
-    if (isOpen && video) {
-      fetchNotes();
-      setGeneralNotesText(video.notes || "");
-      if (player && typeof player.getCurrentTime === "function") {
-        try {
-          const time = Math.floor(player.getCurrentTime() || 0);
-          setCurrentTimestamp(time);
-        } catch {
-          setCurrentTimestamp(0);
-        }
-      }
+    if (isOpen && video?.ytVideoId) {
+      fetchGlobalGuide(video.ytVideoId);
     }
-  }, [isOpen, video, player, fetchNotes]);
+  }, [isOpen, video?.ytVideoId, fetchGlobalGuide]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleEscape = (e) => {
-      if (e.key === "Escape" && !savingNote && !savingGeneral) {
+      if (e.key === "Escape" && !generatingGuide) {
         onClose();
       }
     };
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, savingNote, savingGeneral, onClose]);
+  }, [isOpen, generatingGuide, onClose]);
 
   if (!isOpen || !video) return null;
 
-  const handleCaptureTimestamp = () => {
-    if (player && typeof player.getCurrentTime === "function") {
-      try {
-        const time = Math.floor(player.getCurrentTime() || 0);
-        setCurrentTimestamp(time);
-      } catch {
-        setCurrentTimestamp(0);
+  // 2. Synthesize Study Guide if not cached
+  const handleGenerateStudyGuide = async () => {
+    const ytId = video?.ytVideoId;
+    if (!ytId || generatingGuide) return;
+
+    try {
+      setGeneratingGuide(true);
+      const res = await api.post(`/videos/guide/${ytId}`, {
+        videoTitle: video.title,
+        durationInSeconds: video.durationInSeconds,
+        description: video.description || "",
+      });
+
+      if (res.data?.guide) {
+        setStudyGuide(res.data.guide);
+        if (onNotesSaved) {
+          onNotesSaved({ ...video, notes: res.data.guide.fullMarkdownGuide });
+        }
+        toast.success(
+          res.data.fromCache
+            ? "Master study guide loaded instantly from cache!"
+            : "Master study guide synthesized by Billu AI!"
+        );
       }
-    }
-  };
-
-  const handleCreateNote = async (e) => {
-    e.preventDefault();
-    if (!newNoteText.trim() || savingNote) return;
-
-    try {
-      setSavingNote(true);
-      const res = await api.post(`/videos/${video._id}/notes`, {
-        timestamp: currentTimestamp,
-        noteText: newNoteText.trim(),
-      });
-
-      setTimestampNotes((prev) =>
-        [...prev, res.data.note].sort((a, b) => a.timestamp - b.timestamp),
-      );
-      setNewNoteText("");
-      toast.success("Timestamp note added!");
     } catch (err) {
-      console.error("[Add Note]", err.message);
-      toast.error(err.response?.data?.message || "Failed to add note.");
+      console.error("[Generate Guide Error]", err.message);
+      toast.error(err.response?.data?.message || "Failed to synthesize study guide.");
     } finally {
-      setSavingNote(false);
+      setGeneratingGuide(false);
     }
   };
 
-  const handleStartEdit = (note) => {
-    setEditingNoteId(note._id);
-    setEditingText(note.noteText);
-  };
+  // 3. Synthesize specific chapter notes on demand
+  const handleGenerateModule = async (moduleIndex) => {
+    const ytId = video?.ytVideoId;
+    if (!ytId || generatingModuleIndex !== null) return;
 
-  const handleSaveEdit = async (noteId) => {
-    if (!editingText.trim()) return;
     try {
-      const res = await api.put(`/notes/${noteId}`, {
-        noteText: editingText.trim(),
-      });
-      setTimestampNotes((prev) =>
-        prev.map((n) => (n._id === noteId ? res.data.note : n)),
-      );
-      setEditingNoteId(null);
-      toast.success("Note updated!");
-    } catch (err) {
-      console.error("[Update Note]", err.message);
-      toast.error("Failed to update note.");
-    }
-  };
+      setGeneratingModuleIndex(moduleIndex);
+      const res = await api.post(`/videos/guide/${ytId}/module/${moduleIndex}`);
 
-  const handleDeleteNote = async (noteId) => {
-    try {
-      await api.delete(`/notes/${noteId}`);
-      setTimestampNotes((prev) => prev.filter((n) => n._id !== noteId));
-      toast.success("Note deleted.");
-    } catch (err) {
-      console.error("[Delete Note]", err.message);
-      toast.error("Failed to delete note.");
-    }
-  };
-
-  const handleSaveGeneralNotes = async () => {
-    if (savingGeneral) return;
-    try {
-      setSavingGeneral(true);
-      const res = await api.patch(`/videos/${video._id}/notes`, {
-        notes: generalNotesText.trim(),
-      });
-
-      if (onNotesSaved) {
-        onNotesSaved(res.data.video);
+      if (res.data?.guide) {
+        setStudyGuide(res.data.guide);
+        if (onNotesSaved && res.data.guide.fullMarkdownGuide) {
+          onNotesSaved({ ...video, notes: res.data.guide.fullMarkdownGuide });
+        }
+        setExpandedModuleIndex(moduleIndex);
+        toast.success(`Chapter ${moduleIndex + 1} notes synthesized!`);
       }
-      toast.success("Summary notes saved.");
-      onClose();
     } catch (err) {
-      console.error("[Save General Notes]", err.message);
-      toast.error("Failed to save summary notes.");
+      console.error("[Generate Chapter Error]", err.message);
+      toast.error(err.response?.data?.message || `Failed to synthesize Chapter ${moduleIndex + 1}.`);
     } finally {
-      setSavingGeneral(false);
+      setGeneratingModuleIndex(null);
     }
+  };
+
+  const getNextPendingChapter = () => {
+    if (!studyGuide?.roadmap) return null;
+    return studyGuide.roadmap.find(
+      (m) =>
+        !studyGuide.cachedModuleIndices?.includes(m.index) &&
+        !studyGuide.modulesMap?.[String(m.index)]?.markdownContent
+    );
   };
 
   const handleJumpTo = (seconds) => {
@@ -168,216 +150,288 @@ export default function NotesModal({
     toast.success(`Jumped to ${formatTime(seconds)}`);
   };
 
+  const handleCopyMarkdown = () => {
+    if (!studyGuide?.fullMarkdownGuide) return;
+    navigator.clipboard.writeText(studyGuide.fullMarkdownGuide);
+    setCopied(true);
+    toast.success("Markdown copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-2xl rounded-2xl border border-neutral-800 bg-[#121214] p-5 sm:p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-3xl rounded-2xl border border-neutral-800 bg-[#101014] p-5 sm:p-6 shadow-2xl flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-800 pb-4 mb-4">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-neutral-100 truncate max-w-[450px]">
+        <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4 mb-4">
+          <div className="min-w-0 pr-4">
+            <h2 className="text-base sm:text-lg font-bold text-neutral-100 truncate">
               {video.title}
             </h2>
-            <p className="text-xs text-neutral-400 mt-0.5">Video Learning Notes</p>
+            <div className="flex items-center gap-2 text-xs text-neutral-400 mt-0.5">
+              <span>AI Master Study Guide</span>
+            </div>
           </div>
 
           <button
             onClick={onClose}
             aria-label="Close notes modal"
-            className="p-1.5 rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white transition cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-neutral-800 pb-3 mb-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab("timestamps")}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
-              activeTab === "timestamps"
-                ? "bg-red-950/30 border border-red-500/40 text-red-400"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            Timestamp Notes ({timestampNotes.length})
-          </button>
+        {/* Tab Navigation & Primary Action Bar - Only shown once guide exists */}
+        {studyGuide && (
+          <div className="flex items-center justify-between border-b border-neutral-800/80 pb-3 mb-4 flex-wrap gap-2">
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveTab("roadmap")}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  activeTab === "roadmap"
+                    ? "bg-red-500/15 border border-red-500/30 text-red-400"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>
+                  Roadmap ({studyGuide.roadmap?.filter(m => studyGuide.cachedModuleIndices?.includes(m.index) || Boolean(studyGuide.modulesMap?.[String(m.index)]?.markdownContent)).length || 0}/{studyGuide.roadmap?.length || 0})
+                </span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("general")}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
-              activeTab === "general"
-                ? "bg-red-950/30 border border-red-500/40 text-red-400"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            Video Summary
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("fullguide")}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  activeTab === "fullguide"
+                    ? "bg-red-500/15 border border-red-500/30 text-red-400"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Full Manual</span>
+              </button>
+            </div>
 
-        {/* Tab Content */}
-        {activeTab === "timestamps" ? (
-          <div className="flex-1 flex flex-col min-h-0 space-y-4">
-            {/* Create New Timestamp Note Form */}
-            <form
-              onSubmit={handleCreateNote}
-              className="bg-neutral-950/80 border border-neutral-800 p-3.5 rounded-xl space-y-3 shrink-0"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-400 font-medium">
-                    Timestamp:
-                  </span>
+            <div className="flex items-center gap-2">
+              {/* Quick Next Chapter Action */}
+              {activeTab === "roadmap" && (() => {
+                const nextPending = getNextPendingChapter();
+                if (!nextPending) return null;
+                return (
                   <button
                     type="button"
-                    onClick={handleCaptureTimestamp}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-red-400 font-mono text-xs hover:border-neutral-700 transition cursor-pointer"
+                    onClick={() => handleGenerateModule(nextPending.index)}
+                    disabled={generatingModuleIndex !== null}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                   >
-                    <Clock className="w-3 h-3" />
-                    {formatTime(currentTimestamp)}
+                    {generatingModuleIndex === nextPending.index ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Generating Ch {nextPending.index + 1}...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        <span>Next: Ch {nextPending.index + 1}</span>
+                      </>
+                    )}
                   </button>
-                </div>
+                );
+              })()}
 
+              {studyGuide.fullMarkdownGuide && (
                 <button
                   type="button"
-                  onClick={handleCaptureTimestamp}
-                  className="text-[11px] text-neutral-400 hover:text-red-400 underline transition cursor-pointer"
+                  onClick={handleCopyMarkdown}
+                  title="Copy complete markdown guide"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-800 bg-neutral-900 text-xs font-medium text-neutral-300 hover:text-white transition cursor-pointer"
                 >
-                  Capture current time
+                  <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>{copied ? "Copied" : "Copy"}</span>
                 </button>
-              </div>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newNoteText}
-                  onChange={(e) => setNewNoteText(e.target.value)}
-                  placeholder="Write a note at this timestamp..."
-                  className="flex-1 bg-[#0E0E12] border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-red-500"
-                />
-
-                <button
-                  type="submit"
-                  disabled={savingNote || !newNoteText.trim()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:opacity-90 text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-md shadow-red-500/20"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Note
-                </button>
-              </div>
-            </form>
-
-            {/* List of Timestamp Notes */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[200px]">
-              {loadingNotes ? (
-                <div className="text-center py-8 text-xs text-neutral-400">
-                  Loading saved notes...
-                </div>
-              ) : timestampNotes.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-neutral-800 rounded-xl text-neutral-500 text-xs">
-                  No timestamp notes saved yet. Add key moments above!
-                </div>
-              ) : (
-                timestampNotes.map((note) => (
-                  <div
-                    key={note._id}
-                    className="bg-neutral-950/60 border border-neutral-800 p-3 rounded-xl flex items-start justify-between gap-3 group hover:border-neutral-700 transition"
-                  >
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      {/* Jump to timestamp button */}
-                      <button
-                        type="button"
-                        onClick={() => handleJumpTo(note.timestamp)}
-                        title={`Jump to ${formatTime(note.timestamp)}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold hover:bg-red-500/20 transition cursor-pointer shrink-0 mt-0.5"
-                      >
-                        <Play className="w-3 h-3 fill-current" />
-                        {formatTime(note.timestamp)}
-                      </button>
-
-                      {editingNoteId === note._id ? (
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            type="text"
-                            value={editingText}
-                            onChange={(e) => setEditingText(e.target.value)}
-                            className="flex-1 bg-[#0E0E12] border border-neutral-700 rounded-lg px-2.5 py-1 text-xs text-neutral-100"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleSaveEdit(note._id)}
-                            className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition cursor-pointer"
-                          >
-                            <Save className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-neutral-200 leading-relaxed break-words flex-1 mt-1">
-                          {note.noteText}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
-                      <button
-                        type="button"
-                        onClick={() => handleStartEdit(note)}
-                        title="Edit note"
-                        className="p-1 rounded text-neutral-400 hover:text-white transition cursor-pointer"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteNote(note._id)}
-                        title="Delete note"
-                        className="p-1 rounded text-neutral-400 hover:text-rose-400 transition cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))
               )}
             </div>
           </div>
-        ) : (
-          /* General Summary Notes */
-          <div className="flex-1 flex flex-col space-y-4">
-            <textarea
-              rows={10}
-              value={generalNotesText}
-              onChange={(e) => setGeneralNotesText(e.target.value)}
-              placeholder="Write summary notes for this video..."
-              className="w-full flex-1 resize-none rounded-xl border border-neutral-800 bg-[#0E0E12] p-4 text-xs sm:text-sm text-neutral-100 outline-none focus:border-red-500"
-            />
+        )}
 
-            <div className="flex justify-end gap-3 shrink-0">
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto min-h-[300px] pr-1">
+          {loadingGuide ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-3 text-neutral-400">
+              <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+              <span className="text-xs font-mono">Checking global knowledge cache...</span>
+            </div>
+          ) : !studyGuide ? (
+            <div className="py-16 px-6 text-center rounded-2xl border border-dashed border-neutral-800 bg-neutral-950/40 flex flex-col items-center justify-center space-y-3">
+              <Cpu className="w-8 h-8 text-neutral-600" />
+              <h3 className="text-sm font-semibold text-neutral-200">
+                No Master Study Guide Generated Yet
+              </h3>
+              <p className="text-xs text-neutral-400 max-w-md leading-relaxed">
+                Billu AI will analyze the entire video transcript and generate a textbook-grade
+                study guide with comparative tables, execution flows, and roadmap timestamps.
+              </p>
               <button
                 type="button"
-                onClick={onClose}
-                className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-xs font-medium text-neutral-300 hover:bg-neutral-800 transition cursor-pointer"
+                onClick={handleGenerateStudyGuide}
+                disabled={generatingGuide}
+                className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:opacity-90 text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-lg shadow-red-500/20"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={savingGeneral}
-                onClick={handleSaveGeneralNotes}
-                className="rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:opacity-90 px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-md shadow-red-500/20"
-              >
-                {savingGeneral ? "Saving..." : "Save Summary"}
+                {generatingGuide ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Synthesizing Full Course...</span>
+                  </>
+                ) : (
+                  <>
+                    <Cpu className="w-4 h-4" />
+                    <span>Generate Master Study Guide</span>
+                  </>
+                )}
               </button>
             </div>
-          </div>
-        )}
+          ) : activeTab === "roadmap" ? (
+            /* Tab 1: Roadmap Chapters */
+            <div className="space-y-2.5">
+              {studyGuide.executiveOverview && (
+                <div className="py-2.5 px-3.5 rounded-xl bg-neutral-900/40 border border-neutral-800/60 mb-2">
+                  <p className="text-xs text-neutral-300 leading-relaxed">
+                    {studyGuide.executiveOverview}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                {studyGuide.roadmap?.map((chapter) => {
+                  const isSynthesized =
+                    studyGuide.cachedModuleIndices?.includes(chapter.index) ||
+                    Boolean(studyGuide.modulesMap?.[String(chapter.index)]?.markdownContent);
+                  const moduleData =
+                    studyGuide.modulesMap?.[String(chapter.index)] ||
+                    studyGuide.modulesMap?.[chapter.index];
+                  const isExpanded = expandedModuleIndex === chapter.index;
+                  const isGeneratingThis = generatingModuleIndex === chapter.index;
+
+                  return (
+                    <div
+                      key={chapter.index}
+                      className={`p-2.5 sm:p-3 rounded-xl border transition-colors flex flex-col gap-2 ${
+                        isSynthesized
+                          ? "border-neutral-800/80 bg-neutral-950/60 hover:border-neutral-700"
+                          : "border-neutral-800/40 bg-neutral-950/20 hover:border-neutral-800"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <button
+                            type="button"
+                            onClick={() => handleJumpTo(chapter.startSeconds)}
+                            title={`Seek to ${chapter.timeFormatted || formatTime(chapter.startSeconds)}`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-red-400 font-mono text-[11px] border border-neutral-800 transition cursor-pointer shrink-0"
+                          >
+                            <Play className="w-2.5 h-2.5 fill-current" />
+                            <span>{chapter.timeFormatted || formatTime(chapter.startSeconds)}</span>
+                          </button>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-xs font-semibold text-neutral-200 truncate">
+                                {chapter.title}
+                              </h4>
+                              {isSynthesized && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Notes Ready" />
+                              )}
+                            </div>
+                            {chapter.overview && (
+                              <p className="text-[11px] text-neutral-500 truncate leading-snug">
+                                {chapter.overview}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isSynthesized ? (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedModuleIndex(isExpanded ? null : chapter.index)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-neutral-300 hover:text-white bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 transition cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3 text-neutral-400" />
+                              <span>{isExpanded ? "Hide" : "Notes"}</span>
+                              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleGenerateModule(chapter.index)}
+                              disabled={generatingModuleIndex !== null}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition cursor-pointer disabled:opacity-50"
+                            >
+                              {isGeneratingThis ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span>Generating...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Generate</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Inline Preview */}
+                      {isExpanded && (
+                        <div className="mt-1 pt-2.5 border-t border-neutral-800/60">
+                          <div className="flex items-center justify-between pb-1.5 mb-2">
+                            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+                              Chapter {chapter.index + 1} Summary
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab("fullguide")}
+                              className="inline-flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium"
+                            >
+                              <span>Read in Manual</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="bg-neutral-950/80 p-3 rounded-lg border border-neutral-800/60 overflow-hidden">
+                            <NoteRenderer
+                              content={moduleData?.markdownContent || `## Overview\n\n${chapter.overview || "Chapter notes synthesized and ready."}`}
+                              onSeekTimestamp={handleJumpTo}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Tab 2: Full Study Manual (Rendered with NoteRenderer) */
+            <div className="p-4 rounded-xl border border-neutral-800 bg-neutral-950/60">
+              <NoteRenderer
+                content={(studyGuide.fullMarkdownGuide || studyGuide.executiveOverview || "").replace(
+                  /\[▶\s*([0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)\]/g,
+                  (match, timeStr) => `[▶ ${timeStr}](#t=${timeStr})`
+                ) || "No detailed manual available."}
+                onSeekTimestamp={handleJumpTo}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

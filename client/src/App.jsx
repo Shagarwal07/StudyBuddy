@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -9,14 +9,17 @@ import {
 
 import Home from "./pages/Home";
 import AuthPage from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Practice from "./pages/Practice";
-import YouTubeHub from "./pages/YouTubeHub";
-import Prephub from "./pages/Prephub";
-import Settings from "./pages/Settings";
-import PlaylistDetails from "./pages/PlaylistDetails";
-import PlaylistPlayer from "./pages/PlaylistPlayer";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import Loader from "./components/common/Loader";
+
+// Lazy-loaded heavy modules for sub-200KB landing page bundle
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Practice = lazy(() => import("./pages/Practice"));
+const Prephub = lazy(() => import("./pages/Prephub"));
+const YouTubeHub = lazy(() => import("./pages/YouTubeHub"));
+const PlaylistPlayer = lazy(() => import("./pages/PlaylistPlayer"));
+const PlaylistDetails = lazy(() => import("./pages/PlaylistDetails"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 const PROTECTED_ROUTES = [
   {
@@ -87,21 +90,23 @@ export default function App() {
   return (
     <Router>
       <PageRouteHandler />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/signup" element={<AuthPage />} />
+      <Suspense fallback={<Loader fullscreen text="Loading workspace..." />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/signup" element={<AuthPage />} />
 
-        {PROTECTED_ROUTES.map(({ path, element }) => (
-          <Route
-            key={path}
-            path={path}
-            element={<ProtectedRoute>{element}</ProtectedRoute>}
-          />
-        ))}
+          {PROTECTED_ROUTES.map(({ path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={<ProtectedRoute>{element}</ProtectedRoute>}
+            />
+          ))}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

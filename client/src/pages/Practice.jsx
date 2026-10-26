@@ -4,6 +4,7 @@ import {
   Code2,
   ExternalLink,
   BookOpen,
+  Sparkles,
   Search,
   CheckCircle2,
   Circle,
@@ -27,6 +28,8 @@ import api from "../api/axios";
 import AppShell, { SidebarTrigger } from "../components/layout/AppShell";
 import Loader from "../components/common/Loader";
 import StufuModal from "../components/practice/StufuModal";
+import BilluAiModal from "../components/modals/BilluAiModal";
+import ProblemNotesModal from "../components/modals/ProblemNotesModal";
 import CustomImportModal, { CustomImportForm } from "../components/modals/CustomImportModal";
 import { useAuth } from "../context/AuthContext";
 
@@ -229,6 +232,24 @@ export default function Practice() {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isStufuOpen, setIsStufuOpen] = useState(false);
   const [stufuShowSolution, setStufuShowSolution] = useState(false);
+
+  // Billu AI Modal State (Dedicated, Separate Modal)
+  const [billuProblem, setBilluProblem] = useState(null);
+  const [isBilluOpen, setIsBilluOpen] = useState(false);
+
+  const openBilluAi = (prob) => {
+    setBilluProblem(prob);
+    setIsBilluOpen(true);
+  };
+
+  // Personal Problem Notes Modal State (User-Level Plain Sheet)
+  const [notesProblem, setNotesProblem] = useState(null);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+
+  const openNotes = (prob) => {
+    setNotesProblem(prob);
+    setIsNotesOpen(true);
+  };
 
   const dropdownRef = useRef(null);
   const zeroDropdownRef = useRef(null);
@@ -580,7 +601,7 @@ export default function Practice() {
     return handleMarkSolved(problemKey);
   };
 
-  // Open In-App Stufu Modal (default to split-screen solution view)
+  // Open In-App Stufu Modal (default to split-screen solution view as in previous commit)
   const openStufu = (problem, showSolution = true) => {
     setSelectedProblem(problem);
     setStufuShowSolution(showSolution);
@@ -1145,8 +1166,8 @@ export default function Practice() {
                         <th className="py-3 px-4">Problem Title</th>
                         <th className="py-3 px-3 w-28 text-center">Topic</th>
                         <th className="py-3 px-3 w-24 text-center">Difficulty</th>
-                        <th className="py-3 px-4 w-52 text-left">Resources</th>
-                        <th className="py-3 px-4 text-right w-36">Practice</th>
+                        <th className="py-3 px-4 w-44 text-left">Resources</th>
+                        <th className="py-3 px-4 text-right w-[295px] min-w-[295px]">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-neutral-800/60">
@@ -1262,27 +1283,40 @@ export default function Practice() {
                               </div>
                             </td>
 
-                            {/* Practice Studio Action Buttons */}
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
+                            {/* Practice Studio Action Buttons: 1. Billu AI, 2. Solution, 3. Notes */}
+                            <td className="py-3 px-4 text-right w-[295px] min-w-[295px] whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1.5 flex-nowrap">
+                                {/* 1. Billu AI (NEW ADD ON - Dedicated Separate Modal) */}
+                                <button
+                                  type="button"
+                                  onClick={() => openBilluAi(prob)}
+                                  className="h-7 px-2.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-red-500/40 hover:border-red-500/70 text-red-400 hover:text-red-300 font-medium transition inline-flex items-center gap-1.5 text-[11px] cursor-pointer shadow-xs whitespace-nowrap shrink-0"
+                                  title="Open Billu AI Problem Mentor"
+                                >
+                                  <Sparkles className="w-3 h-3 text-red-400 shrink-0" />
+                                  <span>Billu AI</span>
+                                </button>
+
+                                {/* 2. Solution (OUR CURRENT COMPILER DESIGN - Exact redirection/behavior from previous commit) */}
                                 <button
                                   type="button"
                                   onClick={() => openStufu(prob, true)}
-                                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white transition flex items-center gap-1 text-[11px] cursor-pointer"
-                                  title="View Intuition, Editorial & Code Solution"
+                                  className="h-7 px-2.5 rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:from-[#c94242] hover:to-[#e95858] text-white font-medium transition inline-flex items-center gap-1.5 text-[11px] cursor-pointer shadow-xs whitespace-nowrap shrink-0"
+                                  title="Open In-App Compiler & Solution Studio"
                                 >
-                                  <BookOpen className="w-3 h-3 text-red-500 dark:text-red-400" />
+                                  <Code2 className="w-3 h-3 text-white shrink-0" />
                                   <span>Solution</span>
                                 </button>
 
+                                {/* 3. Notes (USER-LEVEL PLAIN SHEET) */}
                                 <button
                                   type="button"
-                                  onClick={() => openStufu(prob, true)}
-                                  className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:opacity-90 text-white font-semibold transition flex items-center gap-1 text-[11px] cursor-pointer shadow-xs"
-                                  title="Open in split-screen StudyBuddy studio"
+                                  onClick={() => openNotes(prob)}
+                                  className="h-7 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white font-medium transition inline-flex items-center gap-1.5 text-[11px] cursor-pointer whitespace-nowrap shrink-0"
+                                  title="Open Plain Sheet for Personal Notes"
                                 >
-                                  <Code2 className="w-3 h-3" />
-                                  <span>Code</span>
+                                  <BookOpen className="w-3 h-3 text-neutral-400 shrink-0" />
+                                  <span>Notes</span>
                                 </button>
                               </div>
                             </td>
@@ -1331,6 +1365,30 @@ export default function Practice() {
           initialShowSolution={stufuShowSolution}
           onProblemSolved={(probKey, probObj) => handleMarkSolved(probKey, probObj || selectedProblem)}
           onProblemRevert={(probKey, probObj) => handleRevertProblem(probKey, probObj || selectedProblem)}
+        />
+      )}
+
+      {/* Billu AI Modal (Dedicated, Separate from Compiler) */}
+      {isBilluOpen && billuProblem && (
+        <BilluAiModal
+          isOpen={isBilluOpen}
+          onClose={() => {
+            setIsBilluOpen(false);
+            setBilluProblem(null);
+          }}
+          problem={billuProblem}
+        />
+      )}
+
+      {/* Personal Problem Notes Modal (User-Level Plain Sheet) */}
+      {isNotesOpen && notesProblem && (
+        <ProblemNotesModal
+          isOpen={isNotesOpen}
+          onClose={() => {
+            setIsNotesOpen(false);
+            setNotesProblem(null);
+          }}
+          problem={notesProblem}
         />
       )}
     </AppShell>

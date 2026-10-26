@@ -18,6 +18,7 @@ import {
 import toast from "react-hot-toast";
 import api from "../../api/axios";
 import { highlightCode } from "../../utils/codeHighlighter";
+import BilluAiModal from "../modals/BilluAiModal";
 
 const DEFAULT_TEMPLATES = {
   java: (title, isCp = false) =>
@@ -343,6 +344,7 @@ export default function StufuModal({
   const [activeApproachTab, setActiveApproachTab] = useState(0); // 0 = Brute, 1 = Better, 2 = Optimal
   const [copiedCode, setCopiedCode] = useState(false);
   const [refLanguage, setRefLanguage] = useState(null);
+  const [isBilluOpen, setIsBilluOpen] = useState(false);
 
   // Compiler & Judge state
   const [language, setLanguage] = useState("java");
@@ -782,7 +784,7 @@ export default function StufuModal({
           }
         }
         await navigator.clipboard.writeText(codeToCopy);
-        toast.success(`📋 Solution copied! Opening ${currentPlatformName}...`);
+        toast.success(`Solution copied! Opening ${currentPlatformName}...`);
       } catch {
         toast.error("Failed to copy code to clipboard.");
       }
@@ -796,7 +798,7 @@ export default function StufuModal({
       if (!problem) return;
       const probKey = problem.key || String(problem.id) || problem.title;
       if (isProblemSolved) {
-        toast.info("Already solved! 🔄");
+        toast.info("Already solved.");
         onProblemSolved?.(probKey, problem);
         return;
       }
@@ -1133,25 +1135,15 @@ export default function StufuModal({
                     )}
                   </div>
 
-                  {activeApproach?.code && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopySolution(activeApproachCode)}
-                      className="no-chamfer px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      {copiedCode ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 text-neutral-400" />
-                          <span>Copy Code</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsBilluOpen(true)}
+                    className="no-chamfer px-2.5 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/25 hover:border-red-500/40 text-xs flex items-center gap-1.5 transition cursor-pointer font-medium shadow-sm"
+                    title="Ask Billu AI for hints, dry runs, or conceptual doubts"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-red-400" />
+                    <span>Billu AI</span>
+                  </button>
                 </div>
 
                 {/* Solution Content Body */}
@@ -1560,9 +1552,9 @@ export default function StufuModal({
                               <span>Wrong Answer</span>
                             </>
                           ) : runResult.success ? (
-                            "✅ Execution Passed"
+                            "Execution Passed"
                           ) : (
-                            "❌ Compilation / Error"
+                            "Compilation / Error"
                           )}
                         </span>
                         <span className="text-neutral-400">
@@ -1625,8 +1617,8 @@ export default function StufuModal({
                                   <Award className="w-4 h-4 text-emerald-400 shrink-0" />
                                   <span>
                                     {isProblemSolved
-                                      ? "Already solved! 🔥"
-                                      : "Problem marked as SOLVED in your dashboard & streak updated! 🔥"}
+                                      ? "Already solved"
+                                      : "Problem marked as SOLVED in your dashboard & streak updated"}
                                   </span>
                                 </div>
                               )}
@@ -1774,6 +1766,15 @@ export default function StufuModal({
             </div>
           </div>
         </div>
+
+        {/* Dedicated Billu AI Modal */}
+        {isBilluOpen && (
+          <BilluAiModal
+            isOpen={isBilluOpen}
+            onClose={() => setIsBilluOpen(false)}
+            problem={problem}
+          />
+        )}
       </div>,
       document.body
   );

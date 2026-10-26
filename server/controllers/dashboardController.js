@@ -1,71 +1,50 @@
 const Playlist = require("../models/Playlist");
 const Video = require("../models/Video");
-const User = require("../models/User");
-const calculatePlaylistStats = require("../utils/playlistStats");
+const { calculatePlaylistStats, enrichPlaylistCard } = require("../utils/playlistStats");
 
 exports.getDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Parallelize user lookup and playlists in 1 round-trip
-    const [user, userPlaylists] = await Promise.all([
-      User.findById(userId).select("username email").lean(),
-      Playlist.find({ userId }).sort({ createdAt: -1 }).lean(),
-    ]);
-
+    const userPlaylists = await Playlist.find({ userId }).sort({ createdAt: -1 }).lean();
     const totalPlaylists = userPlaylists.length;
+
+    if (totalPlaylists === 0) {
+      return res.status(200).json({
+        success: true,
+        stats: { totalPlaylists: 0, completedVideos: 0 },
+        recentPlaylists: [],
+      });
+    }
+
     const recentPlaylistsRaw = userPlaylists.slice(0, 4);
+    const recentPlaylistIds = recentPlaylistsRaw.map((p) => p._id);
     const allPlaylistIds = userPlaylists.map((p) => p._id);
 
-    // Fetch all user videos in 1 single query instead of 4 separate queries
-    const allVideos = await Video.find({ playlistId: { $in: allPlaylistIds } })
-      .select("playlistId position completed watchedSeconds durationInSeconds thumbnailUrl ytVideoId title")
-      .lean();
+    // Fetch only videos for the 4 recent playlists + fast index count for total completed
+    const [recentVideos, completedVideos] = await Promise.all([
+      Video.find({ playlistId: { $in: recentPlaylistIds } })
+        .select("playlistId completed watchedSeconds durationInSeconds thumbnailUrl ytVideoId")
+        .lean(),
+      Video.countDocuments({ playlistId: { $in: allPlaylistIds }, completed: true }),
+    ]);
 
     const videosByPlaylist = {};
-    let completedVideos = 0;
-    let totalWatchedSeconds = 0;
-
-    for (const v of allVideos) {
+    for (const v of recentVideos) {
       const pid = String(v.playlistId);
       if (!videosByPlaylist[pid]) videosByPlaylist[pid] = [];
       videosByPlaylist[pid].push(v);
-      if (v.completed) completedVideos++;
-      totalWatchedSeconds += v.watchedSeconds || 0;
     }
 
-    const totalVideos = allVideos.length;
-    const videoProgress = totalVideos === 0 ? 0 : Math.round((completedVideos / totalVideos) * 100);
-    const totalWatchedHours = (totalWatchedSeconds / 3600).toFixed(1);
-
-    const recentPlaylists = recentPlaylistsRaw.map((playlist) => {
-      const videos = videosByPlaylist[String(playlist._id)] || [];
-      const stats = calculatePlaylistStats(videos);
-      let thumbnailUrl = playlist.thumbnailUrl;
-      if (!thumbnailUrl || thumbnailUrl.includes("undefined") || !thumbnailUrl.trim()) {
-        const firstVideo = videos[0];
-        thumbnailUrl = firstVideo?.thumbnailUrl || (firstVideo?.ytVideoId ? `https://i.ytimg.com/vi/${firstVideo.ytVideoId}/hqdefault.jpg` : "");
-      }
-      return {
-        ...playlist,
-        thumbnailUrl,
-        ...stats,
-      };
-    });
+    const recentPlaylists = recentPlaylistsRaw.map((playlist) =>
+      enrichPlaylistCard(playlist, videosByPlaylist[String(playlist._id)] || [])
+    );
 
     res.status(200).json({
       success: true,
-      user: {
-        username: user?.username || "Learner",
-        email: user?.email || "",
-      },
       stats: {
         totalPlaylists,
-        totalVideos,
         completedVideos,
-        videoProgress,
-        totalWatchedSeconds,
-        totalWatchedHours,
       },
       recentPlaylists,
     });
@@ -95,7 +74,6 @@ exports.getContinueLearning = async (req, res) => {
       });
     }
 
-    // Fetch all playlist videos in 1 single query (eliminating 2 redundant DB round-trips)
     const playlistVideos = await Video.find({ playlistId: playlist._id })
       .sort({ position: 1 })
       .select("title position completed watchedSeconds durationInSeconds thumbnailUrl ytVideoId progressPercent")

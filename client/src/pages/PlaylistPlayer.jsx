@@ -73,70 +73,135 @@ export default function PlaylistPlayer() {
     fetchPlaylist();
   }, [fetchPlaylist]);
 
-  const saveProgress = useCallback(async (force = false) => {
-    const activePlayer = playerRef.current;
-    const activeVideo = currentVideoRef.current;
-    if (!activePlayer || !activeVideo) return;
-
-    // Only send periodic update if player is actively playing (state 1) unless forced
-    if (
-      !force &&
-      typeof activePlayer.getPlayerState === "function" &&
-      activePlayer.getPlayerState() !== 1
-    ) {
-      return;
-    }
-
-    try {
-      const watchedSeconds = Math.floor(activePlayer.getCurrentTime());
-      const totalDuration =
-        (typeof activePlayer.getDuration === "function"
-          ? Math.floor(activePlayer.getDuration())
-          : 0) ||
-        activeVideo.durationInSeconds ||
-        0;
-
-      await api.patch(`/videos/${activeVideo._id}/progress`, {
-        watchedSeconds,
-        durationInSeconds: totalDuration,
-      });
-
-      const progressPercent =
-        totalDuration > 0
-          ? Math.min(100, Math.round((watchedSeconds / totalDuration) * 100))
-          : 0;
-
-      setVideos((prev) =>
-        prev.map((video) =>
-          video._id === activeVideo._id
-            ? {
-                ...video,
-                watchedSeconds,
-                durationInSeconds: totalDuration || video.durationInSeconds,
-                progressPercent,
-                completed: progressPercent >= 95 ? true : video.completed,
-              }
-            : video,
-        ),
-      );
-    } catch (error) {
-      console.error(
-        "[PlaylistPlayer] Save Progress Error:",
-        error.message || error,
-      );
-    }
-  }, []);
-
+  // Reset player instance when videoId changes so previous player instance cannot be queried
   useEffect(() => {
-    if (!player) return;
+    setPlayer(null);
+  }, [videoId]);
 
-    // Sync progress every 50 seconds to save 80% DB traffic (unmount still saves instantly)
-    const interval = setInterval(() => saveProgress(false), 50000);
+  const saveProgress = useCallback(
+    async (targetVideo, targetPlayer, force = false) => {
+      const activeVideo = targetVideo || currentVideoRef.current;
+      const activePlayer = targetPlayer || playerRef.current;
+      if (!activePlayer || !activeVideo) return;
+
+      // 1. YouTube video ID match verification to guarantee we NEVER save cross-video progress
+      try {
+        const ytData =
+          typeof activePlayer.getVideoData === "function"
+            ? activePlayer.getVideoData()
+            : null;
+        const activeYtId = ytData?.video_id;
+        if (
+          activeYtId &&
+          activeVideo.ytVideoId &&
+          activeYtId !== activeVideo.ytVideoId
+        ) {
+          return;
+        }
+      } catch (err) {
+        console.warn("[PlaylistPlayer] Could not verify videoId from player:", err);
+      }
+
+      // 2. Only send periodic update if player is actively playing (state 1) unless forced
+      if (
+        !force &&
+        typeof activePlayer.getPlayerState === "function" &&
+        activePlayer.getPlayerState() !== 1
+      ) {
+        return;
+      }
+
+      try {
+        const watchedSeconds = Math.floor(
+          typeof activePlayer.getCurrentTime === "function"
+            ? activePlayer.getCurrentTime()
+            : 0,
+        );
+
+        // Preserve authoritative duration from database; only query player if DB duration is missing (0)
+        const totalDuration =
+          activeVideo.durationInSeconds && activeVideo.durationInSeconds > 0
+            ? activeVideo.durationInSeconds
+            : typeof activePlayer.getDuration === "function"
+            ? Math.floor(activePlayer.getDuration())
+            : 0;
+
+        if (watchedSeconds < 0) return;
+
+        await api.patch(`/videos/${activeVideo._id}/progress`, {
+          watchedSeconds,
+          durationInSeconds: totalDuration,
+          ytVideoId: activeVideo.ytVideoId,
+        });
+
+        const progressPercent =
+          totalDuration > 0
+            ? Math.min(100, Math.round((watchedSeconds / totalDuration) * 100))
+            : 0;
+
+        const isCompleted = progressPercent >= 95 ? true : activeVideo.completed;
+
+        setVideos((prev) =>
+          prev.map((v) =>
+            v._id === activeVideo._id
+              ? {
+                  ...v,
+                  watchedSeconds,
+                  // Maintain authoritative duration: never overwrite with player's if already known
+                  durationInSeconds:
+                    v.durationInSeconds && v.durationInSeconds > 0
+                      ? v.durationInSeconds
+                      : totalDuration || v.durationInSeconds,
+                  progressPercent,
+                  completed: isCompleted,
+                }
+              : v,
+          ),
+        );
+      } catch (error) {
+        console.error(
+          "[PlaylistPlayer] Save Progress Error:",
+          error.message || error,
+        );
+      }
+    },
+    [],
+  );
+
+  // Sync progress periodically and cleanly on video change / unmount
+  useEffect(() => {
+    if (!player || !currentVideo) return;
+
+    const checkPlayerMatches = () => {
+      try {
+        const ytData =
+          typeof player.getVideoData === "function"
+            ? player.getVideoData()
+            : null;
+        return (
+          !ytData?.video_id ||
+          !currentVideo.ytVideoId ||
+          ytData.video_id === currentVideo.ytVideoId
+        );
+      } catch {
+        return false;
+      }
+    };
+
+    if (!checkPlayerMatches()) return;
+
+    // Sync progress every 45 seconds while playing
+    const interval = setInterval(() => {
+      saveProgress(currentVideo, player, false);
+    }, 45000);
+
     return () => {
       clearInterval(interval);
-      saveProgress(true);
+      if (checkPlayerMatches()) {
+        saveProgress(currentVideo, player, true);
+      }
     };
-  }, [player, currentVideo?._id, saveProgress]);
+  }, [player, currentVideo, saveProgress]);
 
   const handleVideoSelect = useCallback(
     (targetVideoId) => {
@@ -213,6 +278,7 @@ export default function PlaylistPlayer() {
             {/* Video Player Container */}
             <div className="w-full">
               <VideoPlayer
+                key={currentVideo?._id || currentVideo?.ytVideoId}
                 videoId={currentVideo?.ytVideoId}
                 thumbnailUrl={currentVideo?.thumbnailUrl}
                 title={currentVideo?.title}
