@@ -1,13 +1,17 @@
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
-
-
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const Sentry = require("@sentry/node");
 
-const connectDB = require("./config/db.js");
+// Config & Middleware
+const connectDB = require("./config/db");
+const { globalLimiter } = require("./middleware/rateLimiters");
 
+// Route Handlers
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const playlistRoutes = require("./routes/playlistRoutes");
@@ -17,13 +21,9 @@ const videoRoutes = require("./routes/videoRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const practiceRoutes = require("./routes/practiceRoutes");
 const prephubRoutes = require("./routes/prephubRoutes");
-// const aiRoutes = require("./routes/aiRoutes"); // Added in Commit 3
+const aiRoutes = require("./routes/aiRoutes");
 
-const helmet = require("helmet");
-const cookieParser = require("cookie-parser");
-const { globalLimiter } = require("./middleware/rateLimiters");
-const Sentry = require("@sentry/node");
-
+// Initialize Sentry early if DSN provided
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -33,6 +33,7 @@ if (process.env.SENTRY_DSN) {
 
 const app = express();
 
+// 1. Security Headers
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -41,30 +42,31 @@ app.use(
   })
 );
 
-// 2. Data Sanitization against NoSQL Query Injection (strips $ and . from inputs, Express 5 native)
-app.use((req, res, next) => {
-  const clean = (obj) => {
-    if (!obj || typeof obj !== "object") return;
-    for (const key of Object.keys(obj)) {
-      if (key.startsWith("$") || key.includes(".")) {
-        delete obj[key];
-      } else {
-        clean(obj[key]);
-      }
+// 2. Body & Cookie Parsing (MUST BE BEFORE SANITIZERS)
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(cookieParser());
+
+// 3. Data Sanitization against NoSQL Query Injection (Sanitizes body, query & params)
+const sanitizeObject = (obj) => {
+  if (!obj || typeof obj !== "object") return;
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith("$") || key.includes(".")) {
+      delete obj[key];
+    } else {
+      sanitizeObject(obj[key]);
     }
-  };
-  if (req.body) clean(req.body);
-  if (req.params) clean(req.params);
+  }
+};
+
+app.use((req, res, next) => {
+  if (req.body) sanitizeObject(req.body);
+  if (req.query) sanitizeObject(req.query);
+  if (req.params) sanitizeObject(req.params);
   next();
 });
 
-// 3. Cookie Parser for httpOnly JWT sessions
-app.use(cookieParser());
-
-// 4. Body parser
-app.use(express.json({ limit: "1mb" }));
-
-// 5. Restricted CORS
+// 4. Restricted CORS
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -76,34 +78,15 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-
-      // Explicitly allowed web client origins
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-
-      // Cloudflare workers & pages domains (*.workers.dev, *.pages.dev)
-      if (/^https:\/\/.*?\.(workers|pages)\.dev$/i.test(origin)) {
-        return callback(null, true);
-      }
-
-      // Browser extension origins (Chrome, Edge, Firefox, Brave)
-      if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) {
-        return callback(null, true);
-      }
-
-      // LeetCode origins for direct content-script sync
-      if (/^https:\/\/([a-z0-9-]+\.)?leetcode\.(com|cn)$/i.test(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("CORS policy violation: Access blocked."));
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (/^https:\/\/.*?\.(workers|pages)\.dev$/i.test(origin)) return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
   })
 );
 
-// Support Chrome Private Network Access preflight
+// Private Network Access preflight
 app.use((req, res, next) => {
   if (req.headers["access-control-request-private-network"]) {
     res.setHeader("Access-Control-Allow-Private-Network", "true");
@@ -111,10 +94,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// 6. Global Rate Limiter (DDoS & Bot Shield)
+// 5. Global Rate Limiter
 app.use(globalLimiter);
 
-// Health check endpoints (Unprotected)
+// 6. Health check endpoints
 app.get(["/", "/api", "/api/health"], (req, res) => {
   res.status(200).json({
     success: true,
@@ -122,7 +105,7 @@ app.get(["/", "/api", "/api/health"], (req, res) => {
   });
 });
 
-// Modular API routes
+// 7. API Routes
 app.use(["/api/auth", "/auth"], authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/playlists", playlistRoutes);
@@ -131,10 +114,10 @@ app.use("/api/streak", streakRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/practice", practiceRoutes);
 app.use("/api/prephub", prephubRoutes);
-// app.use("/api/ai", aiRoutes); // Added in Commit 3
+app.use("/api/ai", aiRoutes);
 app.use("/api", noteRoutes);
 
-// Fallback 404 handler
+// 8. 404 Route Catch-All
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -142,9 +125,30 @@ app.use((req, res) => {
   });
 });
 
+// 9. Centralized Error-Handling Middleware (Ensures JSON responses, hides stack in prod)
+app.use((err, req, res, next) => {
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err);
+  }
+
+  const statusCode = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  if (process.env.NODE_ENV !== "production") {
+    console.error("❌ Express Error Handler:", err);
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    ...(process.env.NODE_ENV !== "production" && { stack: err.stack }),
+  });
+});
+
+// 10. Server Boot & Process Lifecycle
 const PORT = process.env.PORT || 5000;
 
-if (process.env.NODE_ENV !== "production" || require.main === module) {
+if (require.main === module) {
   const server = app.listen(PORT, () => {
     console.log(`🚀 StudyBuddy API running on http://localhost:${PORT}`);
   });
@@ -156,16 +160,21 @@ if (process.env.NODE_ENV !== "production" || require.main === module) {
     }
   });
 
-  // Keep-alive self-ping for Render free tier (Render spins down after 15m)
+  // Keep-alive self-ping for free tier hosting
+  let pingTimer = null;
   const extUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL;
   if (extUrl) {
-    setInterval(() => fetch(`${extUrl.replace(/\/+$/, "")}/api/health`).catch(() => {}), 14 * 60 * 1000);
+    pingTimer = setInterval(() => {
+      fetch(`${extUrl.replace(/\/+$/, "")}/api/health`).catch(() => {});
+    }, 14 * 60 * 1000);
   }
 
   const tryConnect = () => {
     connectDB()
       .then(() => {
         console.log("✅ MongoDB Connected successfully");
+        const { processPendingJobs } = require("./services/queueService");
+        processPendingJobs().catch(() => {});
       })
       .catch((error) => {
         console.error("❌ MongoDB Connection Failed (retrying in 10s):", error.message);
@@ -173,6 +182,19 @@ if (process.env.NODE_ENV !== "production" || require.main === module) {
       });
   };
   tryConnect();
+
+  // Graceful shutdown on process termination signals
+  const gracefulShutdown = () => {
+    console.log("🛑 Shutdown signal received: closing HTTP server...");
+    if (pingTimer) clearInterval(pingTimer);
+    server.close(() => {
+      console.log("HTTP server closed.");
+      process.exit(0);
+    });
+  };
+
+  process.on("SIGTERM", gracefulShutdown);
+  process.on("SIGINT", gracefulShutdown);
 }
 
 module.exports = app;

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const verifyVideoOwnership = require("../middleware/videoOwnershipMiddleware");
+const { verifyVideoOwnership } = require("../middleware/ownershipMiddleware");
 
 const protect = require("../middleware/authMiddleware");
 const {

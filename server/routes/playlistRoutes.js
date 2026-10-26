@@ -10,7 +10,7 @@ const {
 } = require("../controllers/playlistController");
 
 const protect = require("../middleware/authMiddleware");
-const verifyPlaylistOwnership = require("../middleware/playlistOwnershipMiddleware");
+const { verifyPlaylistOwnership } = require("../middleware/ownershipMiddleware");
 
 router.post("/sync", protect, syncPlaylist);
 

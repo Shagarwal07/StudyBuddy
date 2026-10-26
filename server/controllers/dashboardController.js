@@ -95,23 +95,20 @@ exports.getContinueLearning = async (req, res) => {
       });
     }
 
-    // Resume partially watched video first
-    let video = await Video.findOne({
-      playlistId: playlist._id,
-      completed: false,
-      progressPercent: { $gt: 0 },
-    }).sort({
-      position: 1,
-    });
+    // Fetch all playlist videos in 1 single query (eliminating 2 redundant DB round-trips)
+    const playlistVideos = await Video.find({ playlistId: playlist._id })
+      .sort({ position: 1 })
+      .select("title position completed watchedSeconds durationInSeconds thumbnailUrl ytVideoId progressPercent")
+      .lean();
 
-    // Otherwise first uncompleted video
+    // 1. Resume partially watched video first
+    let video = playlistVideos.find(
+      (v) => !v.completed && ((v.progressPercent || 0) > 0 || (v.watchedSeconds || 0) > 0)
+    );
+
+    // 2. Otherwise first uncompleted video
     if (!video) {
-      video = await Video.findOne({
-        playlistId: playlist._id,
-        completed: false,
-      }).sort({
-        position: 1,
-      });
+      video = playlistVideos.find((v) => !v.completed);
     }
 
     // Everything completed
@@ -133,12 +130,19 @@ exports.getContinueLearning = async (req, res) => {
       vidThumb = `https://i.ytimg.com/vi/${video.ytVideoId}/hqdefault.jpg`;
     }
 
+    const stats = calculatePlaylistStats(playlistVideos);
+    const totalVideos = playlist.totalVideos || playlistVideos.length;
+
     res.status(200).json({
       success: true,
       playlist: {
         _id: playlist._id,
         title: playlist.title,
         thumbnailUrl: playlistThumb,
+        totalVideos,
+        completedVideos: stats.completedVideos,
+        progress: stats.progress,
+        remainingHours: stats.remainingHours,
       },
       video: {
         _id: video._id,
@@ -146,6 +150,8 @@ exports.getContinueLearning = async (req, res) => {
         thumbnailUrl: vidThumb,
         watchedSeconds: video.watchedSeconds,
         progressPercent: video.progressPercent,
+        durationInSeconds: video.durationInSeconds || 0,
+        position: video.position ?? 0,
       },
     });
   } catch (error) {

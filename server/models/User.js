@@ -40,6 +40,11 @@ const UserSchema = new mongoose.Schema({
     default: "",
     trim: true,
   },
+  gfgHandle: {
+    type: String,
+    default: "",
+    trim: true,
+  },
   role: {
     type: String,
     enum: ["user", "admin"],

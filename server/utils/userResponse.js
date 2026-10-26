@@ -6,6 +6,7 @@ module.exports = (user) => ({
   badge: user.badge || "",
   leetcodeHandle: user.leetcodeHandle || "",
   codeforcesHandle: user.codeforcesHandle || "",
+  gfgHandle: user.gfgHandle || "",
   role: user.role || "user",
   isRkStudent: Boolean(user.isRkStudent),
   rkStatus: user.rkStatus || "none",

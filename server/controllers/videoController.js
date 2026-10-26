@@ -67,7 +67,7 @@ exports.updateVideoNotes = async (req, res) => {
 exports.updateVideoProgress = async (req, res) => {
   try {
     const videoId = req.params.id;
-    const { watchedSeconds, durationInSeconds } = req.body;
+    const { watchedSeconds, durationInSeconds, ytVideoId } = req.body;
 
     if (typeof watchedSeconds !== "number" || watchedSeconds < 0) {
       return res.status(400).json({ success: false, message: "Invalid watchedSeconds" });
@@ -78,10 +78,17 @@ exports.updateVideoProgress = async (req, res) => {
       return res.status(404).json({ success: false, message: "Video not found" });
     }
 
+    // Safety guard: if client passed ytVideoId, ensure it matches DB document to prevent cross-video corruption
+    if (ytVideoId && video.ytVideoId && ytVideoId !== video.ytVideoId) {
+      console.warn(`[Video Progress] Mismatched ytVideoId: body=${ytVideoId}, db=${video.ytVideoId}`);
+      return res.status(400).json({ success: false, message: "YouTube video ID mismatch" });
+    }
+
     const wasCompleted = video.completed;
     const previousWatchedSeconds = video.watchedSeconds || 0;
     let duration = video.durationInSeconds || 0;
 
+    // Only set duration if not already set (preserve authoritative playlist duration)
     if (typeof durationInSeconds === "number" && durationInSeconds > 0 && duration === 0) {
       duration = Math.floor(durationInSeconds);
       video.durationInSeconds = duration;

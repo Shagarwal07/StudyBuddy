@@ -61,7 +61,7 @@ exports.updateNote = async (req, res) => {
     const note = await Note.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
       { $set: update },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!note) {
@@ -87,5 +87,217 @@ exports.deleteNote = async (req, res) => {
   } catch (error) {
     console.error("[Delete Note]", error.message);
     res.status(500).json({ success: false, message: "Failed to delete note" });
+  }
+};
+
+// POST /api/videos/:videoId/ai-notes
+exports.generateAiNotesForVideo = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const { customApiKey, additionalContext, replaceExisting = false } = req.body;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ success: false, message: "Video not found" });
+    }
+
+    const ownsPlaylist = await Playlist.exists({ _id: video.playlistId, userId: req.user.id });
+    if (!ownsPlaylist) {
+      return res.status(403).json({ success: false, message: "Unauthorized to generate notes for this video" });
+    }
+
+    const billuAiService = require("../services/billuAiService");
+
+    const result = await billuAiService.getOrGenerateStudyGuide({
+      ytVideoId: video.ytVideoId,
+      videoTitle: video.title,
+      description: video.description,
+      durationInSeconds: video.durationInSeconds,
+      customApiKey,
+    });
+
+    if (result.guide?.fullMarkdownGuide) {
+      video.notes = result.guide.fullMarkdownGuide;
+      await video.save();
+    }
+
+    res.json({
+      success: true,
+      message: "Study notes synthesized successfully by Billu AI!",
+      guide: result.guide,
+      fromCache: result.fromCache,
+      videoNotes: video.notes,
+    });
+  } catch (error) {
+    console.error("[AI Video Notes]", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to generate AI notes for video",
+    });
+  }
+};
+
+// In-flight map prevents duplicate concurrent Gemini jobs for the same video/module
+const inFlightGuideJobs = new Map();
+
+// GET /api/videos/guide/:ytVideoId
+// Ultra-fast (<50ms) global knowledge cache lookup
+exports.getGlobalStudyGuide = async (req, res) => {
+  try {
+    const { ytVideoId } = req.params;
+    const billuAiService = require("../services/billuAiService");
+    const AiVideoStudyGuide = require("../models/AiVideoStudyGuide");
+    const { assembleFullGuideResponse } = require("../services/ai/notesService");
+
+    const promptVersion = billuAiService.NOTES_PROMPT_VERSION || 3;
+
+    let cached = await AiVideoStudyGuide.findOne({
+      ytVideoId,
+      promptVersion,
+    }).lean();
+
+    if (!cached) {
+      cached = await AiVideoStudyGuide.findOne({
+        ytVideoId,
+        status: "completed",
+      })
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .lean();
+    }
+
+    if (cached) {
+      const fullGuide = await assembleFullGuideResponse(cached);
+      if (fullGuide.fullMarkdownGuide) {
+        Video.updateMany(
+          { ytVideoId },
+          { $set: { notes: fullGuide.fullMarkdownGuide } }
+        ).catch(() => {});
+      }
+      return res.json({
+        success: true,
+        fromCache: true,
+        guide: fullGuide,
+      });
+    }
+
+    return res.json({
+      success: true,
+      fromCache: false,
+      guide: null,
+      message: "No cached study guide found for this video. Call POST to generate.",
+    });
+  } catch (err) {
+    console.error("[GetGlobalStudyGuide]", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/videos/guide/:ytVideoId
+// Generate or fetch global master study guide (Roadmap + Module 0)
+exports.generateGlobalStudyGuide = async (req, res) => {
+  const { ytVideoId } = req.params;
+  const { videoTitle, durationInSeconds, channelTitle, description, customApiKey } = req.body || {};
+
+  if (!ytVideoId) {
+    return res.status(400).json({ success: false, message: "ytVideoId is required." });
+  }
+
+  const flightKey = `guide_${ytVideoId}`;
+  if (inFlightGuideJobs.has(flightKey)) {
+    try {
+      const existingResult = await inFlightGuideJobs.get(flightKey);
+      return res.json({ success: true, fromCache: true, guide: existingResult.guide });
+    } catch (flightErr) {
+      // If previous failed, continue to retry below
+    }
+  }
+
+  const billuAiService = require("../services/billuAiService");
+
+  const job = (async () => {
+    try {
+      return await billuAiService.getOrGenerateStudyGuide({
+        ytVideoId,
+        videoTitle: videoTitle || "Lecture Notes",
+        durationInSeconds: Number(durationInSeconds) || 0,
+        channelTitle,
+        description,
+        customApiKey,
+      });
+    } finally {
+      inFlightGuideJobs.delete(flightKey);
+    }
+  })();
+
+  inFlightGuideJobs.set(flightKey, job);
+
+  try {
+    const result = await job;
+    if (result.guide?.fullMarkdownGuide) {
+      Video.updateMany(
+        { ytVideoId },
+        { $set: { notes: result.guide.fullMarkdownGuide } }
+      ).catch(() => {});
+    }
+    res.json({
+      success: true,
+      fromCache: result.fromCache,
+      guide: result.guide,
+    });
+  } catch (err) {
+    console.error("[GenerateGlobalStudyGuide]", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/videos/guide/:ytVideoId/module/:moduleIndex
+// Generate deep technical manual for a specific module and atomically merge into global cache
+exports.generateModuleDeepGuide = async (req, res) => {
+  const { ytVideoId, moduleIndex } = req.params;
+  const { customApiKey } = req.body || {};
+
+  const flightKey = `mod_${ytVideoId}_${moduleIndex}`;
+  if (inFlightGuideJobs.has(flightKey)) {
+    try {
+      const existingResult = await inFlightGuideJobs.get(flightKey);
+      return res.json({ success: true, fromCache: true, ...existingResult });
+    } catch {
+      // continue
+    }
+  }
+
+  const billuAiService = require("../services/billuAiService");
+
+  const job = (async () => {
+    try {
+      return await billuAiService.generateModuleDeepNotes({
+        ytVideoId,
+        moduleIndex: Number(moduleIndex),
+        customApiKey,
+      });
+    } finally {
+      inFlightGuideJobs.delete(flightKey);
+    }
+  })();
+
+  inFlightGuideJobs.set(flightKey, job);
+
+  try {
+    const result = await job;
+    if (result.guide?.fullMarkdownGuide) {
+      Video.updateMany(
+        { ytVideoId },
+        { $set: { notes: result.guide.fullMarkdownGuide } }
+      ).catch(() => {});
+    }
+    res.json({
+      success: true,
+      fromCache: result.fromCache,
+      module: result.module,
+      guide: result.guide,
+    });
+  } catch (err) {
+    console.error("[GenerateModuleDeepGuide]", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -39,6 +39,9 @@ const ProblemSolutionSchema = new mongoose.Schema(
     ],
     defaultCode: { type: String, default: "" },
     aliases: [{ type: String, index: true }],
+    isAiGenerated: { type: Boolean, default: false, index: true },
+    aiModel: { type: String, default: "" },
+    promptVersion: { type: String, default: "" },
   },
   {
     timestamps: true,

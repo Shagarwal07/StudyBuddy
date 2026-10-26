@@ -1,19 +1,78 @@
 const Playlist = require("../models/Playlist");
 const Video = require("../models/Video");
 const Note = require("../models/Note");
+const AiVideoStudyGuide = require("../models/AiVideoStudyGuide");
 const ytService = require("../services/youtubeService");
-const calculatePlaylistStats = require("../utils/playlistStats");
+const { enrichPlaylistCard } = require("../utils/playlistStats");
+
+const getSnippetThumbnail = (snippet = {}, vId = "") =>
+  snippet.thumbnails?.high?.url ||
+  snippet.thumbnails?.medium?.url ||
+  snippet.thumbnails?.default?.url ||
+  (vId ? `https://i.ytimg.com/vi/${vId}/hqdefault.jpg` : "");
+
+const createSingleVideoPlaylist = async (userId, videoId, res) => {
+  const videoKey = `video_${videoId}`;
+  const existing = await Playlist.findOne({ userId, ytPlaylistId: videoKey });
+  if (existing) {
+    return res.status(400).json({
+      success: false,
+      message: "You are already tracking this video!",
+    });
+  }
+
+  const videoData = await ytService.fetchSingleVideoMetadata(videoId);
+
+  const singlePlaylist = new Playlist({
+    userId,
+    ytPlaylistId: videoKey,
+    title: videoData.title,
+    description: videoData.description || `Single video by ${videoData.channelTitle || "YouTube"}`,
+    thumbnailUrl: videoData.thumbnailUrl,
+    totalVideos: 1,
+  });
+  const savedPlaylist = await singlePlaylist.save();
+
+  const videoDoc = new Video({
+    playlistId: savedPlaylist._id,
+    ytVideoId: videoId,
+    title: videoData.title,
+    description: videoData.description || "",
+    thumbnailUrl: videoData.thumbnailUrl,
+    durationInSeconds: videoData.durationInSeconds || 0,
+    position: 0,
+    watchedSeconds: 0,
+    progressPercent: 0,
+    completed: false,
+    notes: "",
+  });
+  await videoDoc.save();
+
+  return res.status(201).json({
+    success: true,
+    message: "Video imported successfully!",
+    playlist: savedPlaylist,
+  });
+};
 
 exports.syncPlaylist = async (req, res) => {
   try {
     const { playlistUrl } = req.body;
     const userId = req.user.id;
 
-    if (playlistUrl && typeof playlistUrl === "string" && playlistUrl.includes("/shorts/")) {
-      return res.status(400).json({
-        success: false,
-        message: "YouTube Shorts are not supported. Please provide a standard YouTube video or playlist link.",
-      });
+    if (playlistUrl && typeof playlistUrl === "string") {
+      if (playlistUrl.includes("/shorts/")) {
+        return res.status(400).json({
+          success: false,
+          message: "YouTube Shorts are not supported. Please provide a standard YouTube video or playlist link.",
+        });
+      }
+      if (playlistUrl.includes("/live/")) {
+        return res.status(400).json({
+          success: false,
+          message: "YouTube Live streams are not supported. Please provide a standard YouTube video or playlist link.",
+        });
+      }
     }
 
     const playlistId = ytService.extractPlaylistId(playlistUrl);
@@ -30,54 +89,13 @@ exports.syncPlaylist = async (req, res) => {
     if (trackedPlaylistsCount >= 20) {
       return res.status(400).json({
         success: false,
-        message:
-          "Limit reached! You can track up to 20 courses or playlists simultaneously.",
+        message: "Limit reached! You can track up to 20 courses or playlists simultaneously.",
       });
     }
 
     // 1. Single Video Import (when no playlist ID is present)
     if (!playlistId && videoId) {
-      const videoKey = `video_${videoId}`;
-      const existing = await Playlist.findOne({ userId, ytPlaylistId: videoKey });
-      if (existing) {
-        return res.status(400).json({
-          success: false,
-          message: "You are already tracking this video!",
-        });
-      }
-
-      const videoData = await ytService.fetchSingleVideoMetadata(videoId);
-
-      const singlePlaylist = new Playlist({
-        userId,
-        ytPlaylistId: videoKey,
-        title: videoData.title,
-        description: videoData.description || `Single video by ${videoData.channelTitle || "YouTube"}`,
-        thumbnailUrl: videoData.thumbnailUrl,
-        totalVideos: 1,
-      });
-      const savedPlaylist = await singlePlaylist.save();
-
-      const videoDoc = new Video({
-        playlistId: savedPlaylist._id,
-        ytVideoId: videoId,
-        title: videoData.title,
-        description: videoData.description || "",
-        thumbnailUrl: videoData.thumbnailUrl,
-        durationInSeconds: videoData.durationInSeconds || 0,
-        position: 0,
-        watchedSeconds: 0,
-        progressPercent: 0,
-        completed: false,
-        notes: "",
-      });
-      await videoDoc.save();
-
-      return res.status(201).json({
-        success: true,
-        message: "Video imported successfully!",
-        playlist: savedPlaylist,
-      });
+      return createSingleVideoPlaylist(userId, videoId, res);
     }
 
     // 2. Playlist Import (with fallback to single video if playlist is not found or fails)
@@ -93,64 +111,17 @@ exports.syncPlaylist = async (req, res) => {
     try {
       snippet = await ytService.fetchPlaylistMetadata(playlistId);
     } catch (err) {
-      // If playlist is not found but URL also has a single video ID, fallback to importing the single video!
       if (videoId && (err.message === "PLAYLIST_NOT_FOUND" || err.message?.includes("not found"))) {
-        const videoKey = `video_${videoId}`;
-        const existing = await Playlist.findOne({ userId, ytPlaylistId: videoKey });
-        if (existing) {
-          return res.status(400).json({
-            success: false,
-            message: "You are already tracking this video!",
-          });
-        }
-
-        const videoData = await ytService.fetchSingleVideoMetadata(videoId);
-        const singlePlaylist = new Playlist({
-          userId,
-          ytPlaylistId: videoKey,
-          title: videoData.title,
-          description: videoData.description || `Single video by ${videoData.channelTitle || "YouTube"}`,
-          thumbnailUrl: videoData.thumbnailUrl,
-          totalVideos: 1,
-        });
-        const savedPlaylist = await singlePlaylist.save();
-
-        const videoDoc = new Video({
-          playlistId: savedPlaylist._id,
-          ytVideoId: videoId,
-          title: videoData.title,
-          description: videoData.description || "",
-          thumbnailUrl: videoData.thumbnailUrl,
-          durationInSeconds: videoData.durationInSeconds || 0,
-          position: 0,
-          watchedSeconds: 0,
-          progressPercent: 0,
-          completed: false,
-          notes: "",
-        });
-        await videoDoc.save();
-
-        return res.status(201).json({
-          success: true,
-          message: "Video imported successfully!",
-          playlist: savedPlaylist,
-        });
+        return createSingleVideoPlaylist(userId, videoId, res);
       }
-
-      if (err.message === "PLAYLIST_NOT_FOUND") {
-        return res
-          .status(404)
-          .json({ success: false, message: "Playlist not found on YouTube" });
+      if (err.message === "PLAYLIST_NOT_FOUND" || err.message?.includes("not found")) {
+        return res.status(404).json({ success: false, message: "Playlist not found on YouTube" });
       }
       if (err.message === "YOUTUBE_QUOTA_EXCEEDED") {
-        return res
-          .status(429)
-          .json({ success: false, message: "YouTube API quota exceeded. Please try again later." });
+        return res.status(429).json({ success: false, message: "YouTube API quota exceeded. Please try again later." });
       }
       if (err.message === "YOUTUBE_KEY_INVALID") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid YouTube API key configuration." });
+        return res.status(400).json({ success: false, message: "Invalid YouTube API key configuration." });
       }
       throw err;
     }
@@ -164,9 +135,7 @@ exports.syncPlaylist = async (req, res) => {
     const durationMap = new Map(durationData.map((item) => [item.id, item]));
 
     const firstVidId = videosArray[0]?.snippet?.resourceId?.videoId;
-    const fallbackThumb = firstVidId
-      ? `https://i.ytimg.com/vi/${firstVidId}/hqdefault.jpg`
-      : "";
+    const fallbackThumb = firstVidId ? `https://i.ytimg.com/vi/${firstVidId}/hqdefault.jpg` : "";
 
     const calculatedThumbnail =
       snippet.thumbnailUrl ||
@@ -191,23 +160,15 @@ exports.syncPlaylist = async (req, res) => {
         const durationInfo = durationMap.get(vId);
 
         const durationInSeconds = durationInfo
-          ? ytService.convertDurationToSeconds(
-              durationInfo.contentDetails?.duration,
-            )
+          ? ytService.convertDurationToSeconds(durationInfo.contentDetails?.duration)
           : (video.durationInSeconds || 0);
-
-        const vidThumb =
-          videoSnippet.thumbnails?.high?.url ||
-          videoSnippet.thumbnails?.medium?.url ||
-          videoSnippet.thumbnails?.default?.url ||
-          (vId ? `https://i.ytimg.com/vi/${vId}/hqdefault.jpg` : "");
 
         return {
           playlistId: savedPlaylist._id,
           ytVideoId: vId,
           title: videoSnippet.title || `Video ${idx + 1}`,
           description: videoSnippet.description || "",
-          thumbnailUrl: vidThumb,
+          thumbnailUrl: getSnippetThumbnail(videoSnippet, vId),
           position: Number.isFinite(videoSnippet.position) ? videoSnippet.position : idx,
           notes: "",
           durationInSeconds,
@@ -228,10 +189,20 @@ exports.syncPlaylist = async (req, res) => {
       playlist: savedPlaylist,
     });
   } catch (error) {
+    if (error.message === "VIDEO_NOT_FOUND") {
+      return res.status(404).json({ success: false, message: "Video not found on YouTube" });
+    }
+    if (error.message === "PLAYLIST_NOT_FOUND") {
+      return res.status(404).json({ success: false, message: "Playlist not found on YouTube" });
+    }
+    if (error.message === "YOUTUBE_QUOTA_EXCEEDED") {
+      return res.status(429).json({ success: false, message: "YouTube API quota exceeded. Please try again later." });
+    }
+    if (error.message === "YOUTUBE_KEY_INVALID") {
+      return res.status(400).json({ success: false, message: "Invalid YouTube API key configuration." });
+    }
     console.error("[Playlist Sync]", error.message);
-    res
-      .status(500)
-      .json({ success: false, message: "Server Error during synchronization" });
+    res.status(500).json({ success: false, message: "Server Error during synchronization" });
   }
 };
 
@@ -291,16 +262,9 @@ exports.resyncPlaylist = async (req, res) => {
       });
     }
 
-    const latestVideos = await ytService.fetchAllPlaylistVideos(
-      playlist.ytPlaylistId,
-    );
-    const existingVideos = await Video.find(
-      { playlistId: playlist._id },
-      "ytVideoId",
-    );
-    const existingVideoIds = new Set(
-      existingVideos.map((video) => video.ytVideoId),
-    );
+    const latestVideos = await ytService.fetchAllPlaylistVideos(playlist.ytPlaylistId);
+    const existingVideos = await Video.find({ playlistId: playlist._id }, "ytVideoId");
+    const existingVideoIds = new Set(existingVideos.map((video) => video.ytVideoId));
 
     const newVideos = latestVideos.filter((video) => {
       const ytVideoId = video.snippet.resourceId?.videoId;
@@ -312,21 +276,17 @@ exports.resyncPlaylist = async (req, res) => {
       .filter(Boolean);
 
     const durationData =
-      newVideoIds.length > 0
-        ? await ytService.fetchVideoDurations(newVideoIds)
-        : [];
+      newVideoIds.length > 0 ? await ytService.fetchVideoDurations(newVideoIds) : [];
 
     const durationMap = new Map(durationData.map((item) => [item.id, item]));
 
-    const newVideoDocs = newVideos.map((video) => {
-      const videoSnippet = video.snippet;
+    const newVideoDocs = newVideos.map((video, idx) => {
+      const videoSnippet = video.snippet || {};
       const vId = videoSnippet.resourceId?.videoId;
       const durationInfo = durationMap.get(vId);
 
       const durationInSeconds = durationInfo
-        ? ytService.convertDurationToSeconds(
-            durationInfo.contentDetails.duration,
-          )
+        ? ytService.convertDurationToSeconds(durationInfo.contentDetails?.duration)
         : 0;
 
       return {
@@ -334,12 +294,8 @@ exports.resyncPlaylist = async (req, res) => {
         ytVideoId: vId,
         title: videoSnippet.title,
         description: videoSnippet.description || "",
-        thumbnailUrl:
-          videoSnippet.thumbnails?.high?.url ||
-          videoSnippet.thumbnails?.medium?.url ||
-          videoSnippet.thumbnails?.default?.url ||
-          (vId ? `https://i.ytimg.com/vi/${vId}/hqdefault.jpg` : ""),
-        position: videoSnippet.position,
+        thumbnailUrl: getSnippetThumbnail(videoSnippet, vId),
+        position: Number.isFinite(videoSnippet.position) ? videoSnippet.position : idx,
         completed: false,
         progressPercent: 0,
         watchedSeconds: 0,
@@ -371,12 +327,17 @@ exports.resyncPlaylist = async (req, res) => {
 exports.getUserPlaylists = async (req, res) => {
   try {
     const userId = req.user.id;
-    const playlistsRaw = await Playlist.find({ userId }).sort({
-      createdAt: -1,
-    });
+    const playlistsRaw = await Playlist.find({ userId }).sort({ createdAt: -1 }).lean();
+
+    if (playlistsRaw.length === 0) {
+      return res.status(200).json({ success: true, playlists: [] });
+    }
 
     const playlistIds = playlistsRaw.map((p) => p._id);
-    const allVideos = await Video.find({ playlistId: { $in: playlistIds } }).sort({ position: 1 });
+    const allVideos = await Video.find({ playlistId: { $in: playlistIds } })
+      .select("playlistId durationInSeconds watchedSeconds completed thumbnailUrl ytVideoId position")
+      .sort({ position: 1 })
+      .lean();
 
     const videosByPlaylist = {};
     for (const v of allVideos) {
@@ -385,31 +346,8 @@ exports.getUserPlaylists = async (req, res) => {
       videosByPlaylist[pid].push(v);
     }
 
-    const playlists = await Promise.all(
-      playlistsRaw.map(async (playlist) => {
-        const videos = videosByPlaylist[String(playlist._id)] || [];
-        const stats = calculatePlaylistStats(videos);
-
-        let thumbnailUrl = playlist.thumbnailUrl;
-        if (!thumbnailUrl || thumbnailUrl.includes("undefined") || thumbnailUrl.trim() === "") {
-          const firstVideo = videos[0];
-          if (firstVideo?.thumbnailUrl) {
-            thumbnailUrl = firstVideo.thumbnailUrl;
-          } else if (firstVideo?.ytVideoId) {
-            thumbnailUrl = `https://i.ytimg.com/vi/${firstVideo.ytVideoId}/hqdefault.jpg`;
-          }
-          if (thumbnailUrl && thumbnailUrl !== playlist.thumbnailUrl) {
-            playlist.thumbnailUrl = thumbnailUrl;
-            await playlist.save().catch(() => {});
-          }
-        }
-
-        return {
-          ...playlist.toObject(),
-          thumbnailUrl,
-          ...stats,
-        };
-      }),
+    const playlists = playlistsRaw.map((playlist) =>
+      enrichPlaylistCard(playlist, videosByPlaylist[String(playlist._id)] || [])
     );
 
     res.status(200).json({
@@ -441,11 +379,24 @@ exports.getPlaylistDetails = async (req, res) => {
       });
     }
 
-    const videos = await Video.find({
+    const videosRaw = await Video.find({
       playlistId: playlist._id,
-    }).sort({
-      position: 1,
-    });
+    })
+      .sort({ position: 1 })
+      .lean();
+
+    const ytVideoIds = videosRaw.map((v) => v.ytVideoId).filter(Boolean);
+    const existingGuides = await AiVideoStudyGuide.find(
+      { ytVideoId: { $in: ytVideoIds } },
+      "ytVideoId"
+    ).lean();
+
+    const guideSet = new Set(existingGuides.map((g) => g.ytVideoId));
+
+    const videos = videosRaw.map((v) => ({
+      ...v,
+      hasStudyGuide: guideSet.has(v.ytVideoId),
+    }));
 
     res.status(200).json({
       success: true,
@@ -461,4 +412,3 @@ exports.getPlaylistDetails = async (req, res) => {
     });
   }
 };
-
