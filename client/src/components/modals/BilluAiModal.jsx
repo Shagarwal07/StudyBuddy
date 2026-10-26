@@ -258,7 +258,7 @@ export default function BilluAiModal({ isOpen, onClose, problem }) {
       <SpiderwebBackdrop />
 
       {/* Main Modal Card */}
-      <div className="w-full max-w-2xl sm:max-w-3xl h-[84vh] max-h-[780px] my-auto rounded-2xl sm:rounded-3xl border border-neutral-800/80 bg-[#0E0E12] shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden relative z-10">
+      <div data-theme="dark" className="dark-surface w-full max-w-2xl sm:max-w-3xl h-[84vh] max-h-[780px] my-auto rounded-2xl sm:rounded-3xl border border-neutral-800/80 bg-[#0E0E12] shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden relative z-10">
         {/* Modal Header */}
         <div className="h-16 bg-[#111116] border-b border-neutral-800/80 px-5 sm:px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">

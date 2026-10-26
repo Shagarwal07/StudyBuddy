@@ -182,34 +182,34 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-3xl h-[88vh] rounded-2xl border border-neutral-800 bg-[#0E0E12] shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-3xl h-[88vh] rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#0E0E12] shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="h-14 bg-[#121215] border-b border-neutral-800 px-4 flex items-center justify-between shrink-0">
+        <div className="h-14 bg-slate-50 dark:bg-[#121215] border-b border-slate-200 dark:border-neutral-800 px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-500 dark:text-red-400 shrink-0">
               <FileText className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-neutral-100 truncate">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-neutral-100 truncate">
                   Personal Problem Notes
                 </h3>
                 <span className={`text-[10px] font-semibold px-2 py-0.2 rounded-full border ${diffClass}`}>
                   {difficulty}
                 </span>
                 {isModified ? (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                     Unsaved changes
                   </span>
                 ) : (
                   lastSavedAt && (
-                    <span className="text-[10px] font-mono text-neutral-500">
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-neutral-500">
                       Saved
                     </span>
                   )
                 )}
               </div>
-              <p className="text-[11px] text-neutral-400 font-mono truncate">
+              <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-mono truncate">
                 {problemNumber ? `#${problemNumber} ` : ""}{problemTitle}
               </p>
             </div>
@@ -220,10 +220,10 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
             <button
               type="button"
               onClick={() => setIsPreview(!isPreview)}
-              className="px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white transition inline-flex items-center gap-1 text-[11px] cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white transition inline-flex items-center gap-1 text-[11px] cursor-pointer"
               title={isPreview ? "Switch to edit sheet" : "Switch to Markdown preview"}
             >
-              {isPreview ? <Edit3 className="w-3 h-3 text-red-400" /> : <Eye className="w-3 h-3 text-neutral-400" />}
+              {isPreview ? <Edit3 className="w-3 h-3 text-red-500 dark:text-red-400" /> : <Eye className="w-3 h-3 text-slate-500 dark:text-neutral-400" />}
               <span>{isPreview ? "Edit Sheet" : "Preview"}</span>
             </button>
 
@@ -231,7 +231,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 transition cursor-pointer"
               title="Close Notes"
             >
               <X className="w-4 h-4" />
@@ -241,12 +241,12 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
 
         {/* Toolbar (Only visible in edit mode) */}
         {!isPreview && (
-          <div className="h-10 bg-[#111114] border-b border-neutral-800/80 px-3 flex items-center justify-between text-xs shrink-0 select-none">
+          <div className="h-10 bg-slate-50 dark:bg-[#111114] border-b border-slate-200 dark:border-neutral-800/80 px-3 flex items-center justify-between text-xs shrink-0 select-none">
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => applyFormat("bold", "bold text")}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition cursor-pointer"
                 title="Bold (Ctrl+B)"
               >
                 <Bold className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               <button
                 type="button"
                 onClick={() => applyFormat("italic", "italic text")}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition cursor-pointer"
                 title="Italic (Ctrl+I)"
               >
                 <Italic className="w-3.5 h-3.5" />
@@ -262,7 +262,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               <button
                 type="button"
                 onClick={() => applyFormat("code", "code")}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition cursor-pointer"
                 title="Inline Code"
               >
                 <Code className="w-3.5 h-3.5" />
@@ -270,7 +270,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               <button
                 type="button"
                 onClick={() => applyFormat("codeblock", "// code")}
-                className="px-2 py-1 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 font-mono text-[11px] transition cursor-pointer"
+                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 font-mono text-[11px] transition cursor-pointer"
                 title="Code Block"
               >
                 {"{ }"}
@@ -278,14 +278,14 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               <button
                 type="button"
                 onClick={() => applyFormat("bullet", "list item")}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition cursor-pointer"
                 title="Bullet List"
               >
                 <List className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-[10.5px] font-mono text-neutral-500">
+            <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-500 dark:text-neutral-500">
               <span>{wordCount} words</span>
               <span>•</span>
               <span>{charCount} chars</span>
@@ -294,26 +294,26 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
         )}
 
         {/* Note Body: Plain Sheet Canvas or Markdown Preview */}
-        <div className="flex-1 min-h-0 bg-[#0B0B0E] overflow-hidden flex flex-col relative select-text">
+        <div className="flex-1 min-h-0 bg-white dark:bg-[#0B0B0E] overflow-hidden flex flex-col relative select-text">
           {loading ? (
-            <div className="flex-1 flex items-center justify-center text-neutral-500 font-mono text-xs gap-2">
+            <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-neutral-500 font-mono text-xs gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-red-500" />
               <span>Loading your notes...</span>
             </div>
           ) : isPreview ? (
-            <div className="flex-1 overflow-y-auto p-5 text-neutral-200 prose prose-invert prose-sm max-w-none leading-relaxed font-sans">
+            <div className="flex-1 overflow-y-auto p-5 text-slate-800 dark:text-neutral-200 prose dark:prose-invert prose-sm max-w-none leading-relaxed font-sans">
               {content.trim() ? (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
                   components={{
                     table: ({ node, ...props }) => (
-                      <div className="overflow-x-auto my-3 border border-neutral-800 rounded-lg">
+                      <div className="overflow-x-auto my-3 border border-slate-200 dark:border-neutral-800 rounded-lg">
                         <table className="min-w-full text-xs text-left" {...props} />
                       </div>
                     ),
                     th: ({ node, ...props }) => (
-                      <th className="bg-neutral-950 p-2 font-mono text-xs font-bold text-neutral-200 border-b border-neutral-800" {...props} />
+                      <th className="bg-slate-100 dark:bg-neutral-950 p-2 font-mono text-xs font-bold text-slate-800 dark:text-neutral-200 border-b border-slate-200 dark:border-neutral-800" {...props} />
                     ),
                     code: ({ node, className, children, ...props }) => {
                       const match = /language-(\w+)/.exec(className || "");
@@ -322,7 +322,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
 
                       if (isBlock) {
                         return (
-                          <pre className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 font-mono text-xs overflow-x-auto text-neutral-200 leading-relaxed my-2">
+                          <pre className="bg-slate-50 dark:bg-neutral-950 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 font-mono text-xs overflow-x-auto text-slate-800 dark:text-neutral-200 leading-relaxed my-2">
                             <code className={className} {...props}>
                               {children}
                             </code>
@@ -332,7 +332,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
 
                       return (
                         <code
-                          className="bg-neutral-800/80 border border-neutral-700/60 px-1.5 py-0.5 rounded text-xs font-mono text-red-300 inline align-baseline mx-0.5"
+                          className="bg-slate-100 dark:bg-neutral-800/80 border border-slate-200 dark:border-neutral-700/60 px-1.5 py-0.5 rounded text-xs font-mono text-red-600 dark:text-red-300 inline align-baseline mx-0.5"
                           {...props}
                         >
                           {children}
@@ -344,7 +344,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
                   {content}
                 </ReactMarkdown>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-neutral-600 text-xs font-mono select-none">
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-neutral-600 text-xs font-mono select-none">
                   <FileText className="w-8 h-8 mb-2 opacity-40" />
                   <p>No notes written yet. Switch to Edit Sheet to start taking notes.</p>
                 </div>
@@ -356,7 +356,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your notes, intuition, edge cases, formulas, or approach breakdown here...&#10;&#10;Supports Markdown:&#10;• Bullet points&#10;• **Bold**, *Italic*, `code`&#10;• Code blocks&#10;• Press Ctrl+S to save instantly"
-              className="flex-1 w-full p-5 bg-transparent resize-none outline-none font-mono text-xs text-neutral-200 placeholder-neutral-600 leading-relaxed overflow-y-auto selection:bg-red-500/30"
+              className="flex-1 w-full p-5 bg-transparent resize-none outline-none font-mono text-xs text-slate-900 dark:text-neutral-200 placeholder-slate-400 dark:placeholder-neutral-600 leading-relaxed overflow-y-auto selection:bg-red-500/20 dark:selection:bg-red-500/30"
               spellCheck={false}
               autoFocus
             />
@@ -364,16 +364,16 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
         </div>
 
         {/* Footer */}
-        <div className="h-12 bg-[#121215] border-t border-neutral-800 px-4 flex items-center justify-between text-xs shrink-0 select-none">
+        <div className="h-12 bg-slate-50 dark:bg-[#121215] border-t border-slate-200 dark:border-neutral-800 px-4 flex items-center justify-between text-xs shrink-0 select-none">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleCopy}
               disabled={!content.trim()}
-              className="px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white transition inline-flex items-center gap-1.5 text-[11px] cursor-pointer disabled:opacity-40"
+              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white transition inline-flex items-center gap-1.5 text-[11px] cursor-pointer disabled:opacity-40"
               title="Copy notes"
             >
-              {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              {copied ? <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
               <span>{copied ? "Copied" : "Copy"}</span>
             </button>
 
@@ -381,14 +381,14 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
               type="button"
               onClick={handleClear}
               disabled={!content.trim()}
-              className="p-1 rounded-lg hover:bg-neutral-800 text-neutral-500 hover:text-neutral-300 transition cursor-pointer disabled:opacity-40"
+              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-400 hover:text-slate-600 dark:text-neutral-500 dark:hover:text-neutral-300 transition cursor-pointer disabled:opacity-40"
               title="Clear notes"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
 
             {lastSavedAt && (
-              <span className="hidden sm:inline-block text-[10px] font-mono text-neutral-500 pl-2">
+              <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400 dark:text-neutral-500 pl-2">
                 Last saved: {lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
             )}
@@ -398,7 +398,7 @@ export default function ProblemNotesModal({ isOpen, onClose, problem }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition text-[11px] cursor-pointer"
+              className="px-3 py-1 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition text-[11px] cursor-pointer"
             >
               Close
             </button>

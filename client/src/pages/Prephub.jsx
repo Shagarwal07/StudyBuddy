@@ -465,8 +465,8 @@ export default function Prephub() {
                   onKeyDown={(e) => e.key === "Enter" && setActiveSubjectId(sub.id)}
                   className={`relative overflow-hidden p-4 sm:p-4.5 rounded-xl cursor-pointer select-none transition-all duration-200 group flex flex-col justify-between shrink-0 snap-start w-full sm:w-[280px] lg:w-[290px] xl:w-[300px] ${
                     isActive
-                      ? "bg-[#140b0f] border border-red-500/60 shadow-[0_0_16px_rgba(239,68,68,0.15)] ring-1 ring-red-500/20"
-                      : "bg-[#0d090c] border border-neutral-800/80 hover:border-neutral-700 hover:bg-[#120c10] shadow-sm"
+                      ? "bg-[var(--surface-card)] border-2 border-red-500 shadow-md ring-2 ring-red-500/20"
+                      : "bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:border-red-500/40 hover:bg-[var(--surface-hover)] shadow-xs"
                   }`}
                 >
                   <div>
@@ -475,8 +475,8 @@ export default function Prephub() {
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                           isActive
-                            ? "bg-red-500/15 border border-red-500/35 text-red-400"
-                            : "bg-[#140e13] border border-neutral-800 text-neutral-400 group-hover:text-red-400"
+                            ? "bg-red-500/15 border border-red-500/35 text-red-500"
+                            : "bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-theme-muted group-hover:text-red-500"
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -485,29 +485,29 @@ export default function Prephub() {
                       <div className="text-right">
                         <div
                           className={`text-xl font-bold font-mono tracking-tight leading-none ${
-                            isActive ? "text-red-500" : "text-white"
+                            isActive ? "text-red-600 dark:text-red-400" : "text-theme-main"
                           }`}
                         >
                           {sub.topicsCount}
                         </div>
-                        <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-400 block mt-0.5">
+                        <span className="text-[9px] font-mono uppercase tracking-wider text-theme-muted block mt-0.5">
                           {sub.topicsCount} TOPICS
                         </span>
                       </div>
                     </div>
 
-                    <h3 className="text-sm font-bold tracking-tight text-white group-hover:text-red-400 transition-colors truncate">
+                    <h3 className="text-sm font-bold tracking-tight text-theme-main group-hover:text-red-500 transition-colors truncate">
                       {sub.title}
                     </h3>
-                    <p className="text-xs text-neutral-400 group-hover:text-neutral-300 transition-colors mt-1 line-clamp-2 leading-relaxed min-h-[32px]">
+                    <p className="text-xs text-theme-muted group-hover:text-theme-main transition-colors mt-1 line-clamp-2 leading-relaxed min-h-[32px]">
                       {sub.description}
                     </p>
                   </div>
 
                   {/* Bottom Row: Modules Count & Active / Explore Badge */}
-                  <div className="mt-3 pt-2.5 border-t border-neutral-800/60 flex items-center justify-between text-xs">
-                    <span className="font-mono text-[11px] text-neutral-400 group-hover:text-neutral-300 transition-colors flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-neutral-500 group-hover:text-red-400 transition-colors" />
+                  <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+                    <span className="font-mono text-[11px] text-theme-muted transition-colors flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-theme-muted group-hover:text-red-500 transition-colors" />
                       {sub.modulesCount} modules
                     </span>
 
@@ -517,7 +517,7 @@ export default function Prephub() {
                           e.stopPropagation();
                           setIsVerificationModalOpen(true);
                         }}
-                        className="text-neutral-400 hover:text-white transition-colors flex items-center cursor-pointer"
+                        className="text-theme-muted hover:text-theme-main transition-colors flex items-center cursor-pointer"
                         title="Locked for RK Coaching students"
                       >
                         <Lock className="w-3.5 h-3.5" strokeWidth={1.8} />
@@ -527,7 +527,7 @@ export default function Prephub() {
                         Active
                       </span>
                     ) : (
-                      <span className="text-neutral-400 group-hover:text-white font-mono text-[11px] flex items-center gap-1 transition-colors">
+                      <span className="text-theme-muted group-hover:text-theme-main font-mono text-[11px] flex items-center gap-1 transition-colors">
                         Explore →
                       </span>
                     )}
@@ -539,12 +539,12 @@ export default function Prephub() {
         </section>
 
         {/* Detailed Syllabus Explorer (Active Roadmap Detail Box) */}
-        <section className="bg-[#0e0a0d] border border-neutral-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl space-y-6">
+        <section className="bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-xs space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-6 items-center">
             {/* Left Column: Title, Description, and Badges */}
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-theme-main tracking-tight">
                   {subjectDetails?.title || currentSubject?.title || "Syllabus Details"}
                 </h2>
                 {currentSubject?.lastSyncedAt && (
@@ -554,7 +554,7 @@ export default function Prephub() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-neutral-400 mt-2 mb-4 leading-relaxed">
+              <p className="text-xs text-theme-muted mt-2 mb-4 leading-relaxed">
                 {activeGroup === "core"
                   ? "Comprehensive curriculum extracted directly from core computer science university & interview syllabi."
                   : activeGroup === "dsa"
@@ -564,10 +564,10 @@ export default function Prephub() {
 
               {/* Badges: Modules and Lessons */}
               <div className="flex items-center gap-2 text-xs font-mono">
-                <span className="px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300">
+                <span className="px-2.5 py-1 rounded-lg bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-theme-muted">
                   {subjectDetails?.totalModules || 0} modules
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300">
+                <span className="px-2.5 py-1 rounded-lg bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-theme-muted">
                   {subjectDetails?.totalItems || 0} lessons
                 </span>
               </div>
@@ -575,12 +575,12 @@ export default function Prephub() {
 
             {/* Right Column: Practice in Interactive Studio Box */}
             {isPracticeEligible && (
-              <div className="relative overflow-hidden p-5 rounded-2xl bg-[#160d12] border border-red-950/60 shadow-lg space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-white">
+              <div className="relative overflow-hidden p-5 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] shadow-xs space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-theme-main">
                   <Code2 className="w-4 h-4 text-red-500" />
                   <span>Practice in the Interactive Studio</span>
                 </div>
-                <p className="text-[11px] text-neutral-400 leading-relaxed">
+                <p className="text-[11px] text-theme-muted leading-relaxed">
                   3-tier solutions, 1-click judge forwarding, and mastery tracking for every problem.
                 </p>
                 <button

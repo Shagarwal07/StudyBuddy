@@ -192,10 +192,10 @@ export default function Heatmap({ heatmap = {} }) {
       {/* Header: Title + Subtitle on Left, Controls (Timeframe + Legend) on Right */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <div className="min-w-0">
-          <h2 className="text-base font-bold text-white tracking-tight">
+          <h2 className="text-base font-bold text-theme-main tracking-tight">
             Activity Heatmap
           </h2>
-          <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-neutral-400 mt-0.5">
+          <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-theme-muted mt-0.5">
             VIDEOS WATCHED AND CODING PROBLEMS SOLVED, {timeframe === "1y" ? "PAST YEAR" : "PAST 6 MONTHS"}
           </p>
         </div>
@@ -203,14 +203,14 @@ export default function Heatmap({ heatmap = {} }) {
         {/* Right Controls: Timeframe Switch + Less ... More Legend */}
         <div className="flex items-center gap-3 select-none shrink-0">
           {/* Timeframe Toggle */}
-          <div className="flex items-center bg-[#130e11] p-0.5 rounded border border-neutral-900 text-[10px] font-mono">
+          <div className="flex items-center bg-[var(--surface-hover)] p-0.5 rounded border border-[var(--border-subtle)] text-[10px] font-mono">
             <button
               type="button"
               onClick={() => setTimeframe("6m")}
               className={`px-2 py-0.5 rounded transition cursor-pointer ${
                 timeframe === "6m"
-                  ? "bg-[#661e27] text-white font-semibold"
-                  : "text-neutral-400 hover:text-neutral-200"
+                  ? "bg-red-600 !text-white font-bold shadow-xs"
+                  : "text-theme-muted hover:text-theme-main"
               }`}
             >
               6M
@@ -220,8 +220,8 @@ export default function Heatmap({ heatmap = {} }) {
               onClick={() => setTimeframe("1y")}
               className={`px-2 py-0.5 rounded transition cursor-pointer ${
                 timeframe === "1y"
-                  ? "bg-[#661e27] text-white font-semibold"
-                  : "text-neutral-400 hover:text-neutral-200"
+                  ? "bg-red-600 !text-white font-bold shadow-xs"
+                  : "text-theme-muted hover:text-theme-main"
               }`}
             >
               1Y
@@ -230,7 +230,7 @@ export default function Heatmap({ heatmap = {} }) {
 
           {/* Less ... More Legend */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-neutral-400">Less</span>
+            <span className="text-[10px] font-mono text-theme-muted">Less</span>
             <div
               title="0 activity"
               className="w-2.5 h-2.5 rounded-[2px] bg-[#140e11] border border-[#21161b]"
@@ -251,7 +251,7 @@ export default function Heatmap({ heatmap = {} }) {
               title="Intense activity"
               className="w-2.5 h-2.5 rounded-[2px] bg-[#e53844] border border-[#ff5c67] shadow-[0_0_4px_rgba(229,56,68,0.4)]"
             />
-            <span className="text-[10px] font-mono text-neutral-400">More</span>
+            <span className="text-[10px] font-mono text-theme-muted">More</span>
           </div>
         </div>
       </div>
@@ -264,11 +264,11 @@ export default function Heatmap({ heatmap = {} }) {
           <div className="h-4" />
 
           {/* 7 Day labels matching cell height and row gap */}
-          <div className="flex flex-col gap-1 sm:gap-1.5 text-neutral-400">
+          <div className="flex flex-col gap-1 sm:gap-1.5 text-theme-muted">
             {WEEK_DAYS.map((day) => (
               <div
                 key={day}
-                className="h-3 sm:h-3.5 flex items-center justify-end font-medium text-[9px] sm:text-[10px] leading-none pr-1.5 text-neutral-400 select-none"
+                className="h-3 sm:h-3.5 flex items-center justify-end font-medium text-[9px] sm:text-[10px] leading-none pr-1.5 text-theme-muted select-none"
               >
                 {day}
               </div>
@@ -299,9 +299,9 @@ export default function Heatmap({ heatmap = {} }) {
                   }`}
                 >
                   {/* Month Label Header: Placed at the week column where month starts */}
-                  <div className="h-4 text-[10px] font-mono text-neutral-400 relative">
+                  <div className="h-4 text-[10px] font-mono text-theme-muted relative">
                     {monthLabel && (
-                      <span className="absolute left-0 top-0 whitespace-nowrap select-none font-medium text-neutral-400">
+                      <span className="absolute left-0 top-0 whitespace-nowrap select-none font-medium text-theme-muted">
                         {monthLabel}
                       </span>
                     )}

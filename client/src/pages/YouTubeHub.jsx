@@ -92,42 +92,42 @@ export default function YouTubeHub() {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-8">
         
         {/* Top Floating App Bar */}
-        <div className="pt-2 flex items-center justify-between border-b border-neutral-800/60 pb-3">
+        <div className="pt-2 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
           <div className="flex items-center gap-2.5">
             <SidebarTrigger />
-            <span className="text-xs font-mono uppercase tracking-[0.16em] text-neutral-400">
+            <span className="text-xs font-mono uppercase tracking-[0.16em] text-theme-muted">
               Workspace / Ad-free Video
             </span>
           </div>
 
-          <span className="text-xs font-mono text-neutral-400">
+          <span className="text-xs font-mono text-theme-muted">
             {playlists.length} {playlists.length === 1 ? "course" : "courses"} in library
           </span>
         </div>
 
         {/* 1. Add Anything Inline Bar */}
-        <section className="rounded-2xl bg-[#0e0a0d]/90 border border-neutral-800/80 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+        <section className="rounded-2xl bg-[var(--surface-card)] border border-[var(--border-subtle)] p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
           <div className="min-w-0">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+            <h3 className="text-sm sm:text-base font-bold text-theme-main tracking-tight">
               Add anything
             </h3>
-            <p className="text-xs text-neutral-400 mt-0.5">
+            <p className="text-xs text-theme-muted mt-0.5">
               Any playlist or single video, ad-free.
             </p>
           </div>
 
           <form
             onSubmit={handleInlineSubmit}
-            className="relative flex-1 max-w-xl flex items-center bg-[#070507] border border-neutral-800 rounded-xl px-3 py-1.5 focus-within:border-red-500/80 transition"
+            className="relative flex-1 max-w-xl flex items-center bg-[var(--surface-hover)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 focus-within:border-red-500/80 transition"
           >
-            <Link2 className="w-4 h-4 text-neutral-400 mr-2 shrink-0" />
+            <Link2 className="w-4 h-4 text-theme-muted mr-2 shrink-0" />
             <input
               type="text"
               value={inlineUrl}
               onChange={(e) => setInlineUrl(e.target.value)}
               placeholder="Paste a YouTube link"
               disabled={importing}
-              className="bg-transparent text-xs text-white placeholder-neutral-500 outline-none flex-1 min-w-0 pr-2"
+              className="bg-transparent text-xs text-theme-main placeholder:text-theme-muted outline-none flex-1 min-w-0 pr-2"
             />
             <button
               type="submit"
@@ -150,20 +150,20 @@ export default function YouTubeHub() {
         <section className="space-y-4">
           {/* Section Header: Title on Left, Filter Tabs + Search on Right */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-theme-main tracking-tight">
               Your library
             </h2>
 
             <div className="flex flex-wrap items-center gap-3">
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-neutral-950 border border-neutral-800 text-xs font-medium select-none">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs font-medium select-none">
                 <button
                   type="button"
                   onClick={() => setFilterTab("all")}
                   className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                     filterTab === "all"
-                      ? "bg-white text-black font-bold shadow-sm"
-                      : "text-neutral-400 hover:text-white"
+                      ? "bg-[var(--surface-card)] text-theme-main font-bold shadow-xs border border-[var(--border-subtle)]"
+                      : "text-theme-muted hover:text-theme-main"
                   }`}
                 >
                   All
@@ -173,8 +173,8 @@ export default function YouTubeHub() {
                   onClick={() => setFilterTab("in_progress")}
                   className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                     filterTab === "in_progress"
-                      ? "bg-white text-black font-bold shadow-sm"
-                      : "text-neutral-400 hover:text-white"
+                      ? "bg-[var(--surface-card)] text-theme-main font-bold shadow-xs border border-[var(--border-subtle)]"
+                      : "text-theme-muted hover:text-theme-main"
                   }`}
                 >
                   In progress
@@ -184,8 +184,8 @@ export default function YouTubeHub() {
                   onClick={() => setFilterTab("finished")}
                   className={`px-3 py-1 rounded-lg transition cursor-pointer ${
                     filterTab === "finished"
-                      ? "bg-white text-black font-bold shadow-sm"
-                      : "text-neutral-400 hover:text-white"
+                      ? "bg-[var(--surface-card)] text-theme-main font-bold shadow-xs border border-[var(--border-subtle)]"
+                      : "text-theme-muted hover:text-theme-main"
                   }`}
                 >
                   Finished
@@ -194,13 +194,13 @@ export default function YouTubeHub() {
 
               {/* Search Box */}
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search your library"
-                  className="bg-[#0e0a0d] border border-neutral-800 rounded-lg pl-8 pr-3 py-1 text-xs text-white placeholder-neutral-500 outline-none focus:border-red-500 transition w-44 sm:w-56"
+                  className="bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-lg pl-8 pr-3 py-1 text-xs text-theme-main placeholder:text-theme-muted outline-none focus:border-red-500 transition w-44 sm:w-56"
                 />
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function YouTubeHub() {
                 <div
                   key={playlist._id}
                   onClick={() => navigate(`/playlist/${playlist._id}`)}
-                  className="group relative cursor-pointer rounded-2xl border border-neutral-800/80 bg-[#0d090c]/90 hover:bg-[#140e13] hover:border-neutral-700 transition flex flex-col overflow-hidden shadow-md"
+                  className="group relative cursor-pointer rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] hover:border-red-500/40 hover:shadow-md transition flex flex-col overflow-hidden shadow-xs"
                 >
                   {/* Thumbnail area */}
                   <div className="aspect-video w-full relative overflow-hidden bg-neutral-950">
@@ -255,11 +255,11 @@ export default function YouTubeHub() {
 
                   {/* Info area */}
                   <div className="p-3.5 flex flex-col flex-1 justify-between gap-2.5">
-                    <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-red-400 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-xs sm:text-sm font-bold text-theme-main group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2 leading-snug">
                       {playlist.title}
                     </h3>
 
-                    <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 pt-1 border-t border-neutral-800/50">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-theme-muted pt-1 border-t border-[var(--border-subtle)]">
                       <span className="truncate pr-1">
                         {completed} / {total} videos
                         {playlist.remainingHours ? ` • ${playlist.remainingHours} hrs left` : ""}
@@ -292,12 +292,12 @@ export default function YouTubeHub() {
             {/* Dashed "+ Add a playlist or video" Card */}
             <div
               onClick={openModal}
-              className="min-h-[220px] rounded-2xl border-2 border-dashed border-neutral-800/90 hover:border-red-500/60 hover:bg-neutral-900/30 transition flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+              className="min-h-[220px] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-red-500/60 hover:bg-[var(--surface-hover)] transition flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
             >
               <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 group-hover:scale-110 group-hover:bg-red-500/20 transition duration-200 mb-3">
                 <Plus className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-neutral-300 group-hover:text-white transition">
+              <span className="text-xs sm:text-sm font-bold text-theme-muted group-hover:text-theme-main transition">
                 Add a playlist or video
               </span>
             </div>

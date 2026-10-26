@@ -19,7 +19,6 @@ import {
   Link2,
   ShieldCheck,
   User,
-  Download,
   RotateCcw,
 } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
@@ -35,9 +34,9 @@ import { useAuth } from "../context/AuthContext";
 
 
 const DIFF_BADGES = {
-  Easy: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-  Medium: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-  Hard: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+  Easy: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30",
+  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30",
+  Hard: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30",
 };
 
 const getJudgePlatformName = (url = "", platform = "") => {
@@ -923,49 +922,6 @@ export default function Practice() {
           )}
         </section>
 
-        {/* Clean Extension & Settings Sync Banner Strip (Matching Sub-header layout) */}
-        <div className="h-11 bg-white dark:bg-[#121214] border border-slate-200 dark:border-neutral-800 rounded-xl px-4 flex items-center justify-between shrink-0 shadow-xs">
-          <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
-            <Code2 className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
-            <span className="text-xs font-medium text-slate-800 dark:text-neutral-200 truncate">
-              Auto-sync coding progress:
-            </span>
-            <Link
-              to="/settings"
-              className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition underline underline-offset-2 font-medium shrink-0 flex items-center gap-1"
-            >
-              <span>Set handles in Settings</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
-            <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono hidden md:inline shrink-0">
-              (⚠️ Chrome browser required)
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={import.meta.env.VITE_CHROME_EXTENSION_URL || "/studybuddy-extension.zip"}
-              target={import.meta.env.VITE_CHROME_EXTENSION_URL ? "_blank" : undefined}
-              rel={import.meta.env.VITE_CHROME_EXTENSION_URL ? "noreferrer" : undefined}
-              download={import.meta.env.VITE_CHROME_EXTENSION_URL ? undefined : "studybuddy-extension.zip"}
-              onClick={() => {
-                if (!import.meta.env.VITE_CHROME_EXTENSION_URL) {
-                  toast.success("StudyBuddy extension package downloaded! 🚀");
-                }
-              }}
-              className="text-xs text-slate-700 hover:text-slate-900 dark:text-neutral-200 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-              title="Add StudyBuddy to Chrome"
-            >
-              {import.meta.env.VITE_CHROME_EXTENSION_URL ? (
-                <ExternalLink className="w-3 h-3 text-red-500 dark:text-red-400" />
-              ) : (
-                <Download className="w-3 h-3 text-red-500 dark:text-red-400" />
-              )}
-              <span className="font-medium">Add to Chrome</span>
-            </a>
-          </div>
-        </div>
-
         {/* If user currently has ZERO sheets enrolled */}
         {sheets.length === 0 ? (
           <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-6 sm:p-8 text-center max-w-lg mx-auto space-y-5 my-10 shadow-xl">
@@ -1092,16 +1048,16 @@ export default function Practice() {
                           onClick={() => setSelectedDifficulty(diff)}
                           className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
                             isSelected
-                              ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold shadow-xs"
-                              : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                              ? "bg-red-500/15 !text-red-600 dark:!text-red-400 border border-red-500/30 font-semibold shadow-xs"
+                              : "text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white"
                           }`}
                         >
-                          <span>{diff === "ALL" ? "All Diff" : diff.charAt(0) + diff.slice(1).toLowerCase()}</span>
+                          <span className={isSelected ? "!text-red-600 dark:!text-red-400" : ""}>{diff === "ALL" ? "All Diff" : diff.charAt(0) + diff.slice(1).toLowerCase()}</span>
                           <span
                             className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight ${
                               isSelected
-                                ? "bg-red-500/20 text-red-600 dark:text-red-300 font-bold"
-                                : "bg-slate-200/80 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400"
+                                ? "bg-red-500/20 !text-red-600 dark:!text-red-300 font-bold"
+                                : "bg-slate-200/90 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium"
                             }`}
                           >
                             {count}
@@ -1123,16 +1079,16 @@ export default function Practice() {
                           onClick={() => setSelectedStatus(status)}
                           className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
                             isSelected
-                              ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-semibold shadow-xs"
-                              : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                              ? "bg-red-500/15 !text-red-600 dark:!text-red-400 border border-red-500/30 font-semibold shadow-xs"
+                              : "text-slate-700 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white"
                           }`}
                         >
-                          <span>{status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}</span>
+                          <span className={isSelected ? "!text-red-600 dark:!text-red-400" : ""}>{status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}</span>
                           <span
                             className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight ${
                               isSelected
-                                ? "bg-red-500/20 text-red-600 dark:text-red-300 font-bold"
-                                : "bg-slate-200/80 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400"
+                                ? "bg-red-500/20 !text-red-600 dark:!text-red-300 font-bold"
+                                : "bg-slate-200/90 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-medium"
                             }`}
                           >
                             {count}
@@ -1159,7 +1115,7 @@ export default function Practice() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 dark:bg-[#0E0E12] border-b border-slate-200 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 font-mono text-[11px]">
+                    <thead className="bg-slate-50 dark:bg-[#0E0E12] border-b border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 font-mono text-[11px] font-semibold">
                       <tr>
                         <th className="py-3 px-4 w-12 text-center">Status</th>
                         <th className="py-3 px-3 w-16 text-center">#</th>
@@ -1213,17 +1169,17 @@ export default function Practice() {
                             </td>
 
                             {/* ID */}
-                            <td className="py-3 px-3 font-mono text-slate-500 dark:text-neutral-400 text-[11px] text-center">
-                              <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800/80 text-slate-600 dark:text-neutral-400 font-mono">
+                            <td className="py-3 px-3 font-mono text-slate-600 dark:text-neutral-400 text-[11px] text-center">
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800/80 text-slate-700 dark:text-neutral-300 font-mono font-medium">
                                 #{prob.leetcodeId || prob.id}
                               </span>
                             </td>
 
                             {/* Title */}
-                            <td className="py-3 px-4 font-medium text-slate-900 dark:text-neutral-100">
+                            <td className="py-3 px-4 font-semibold text-slate-900 dark:text-neutral-100">
                               <span
                                 onClick={() => openStufu(prob, false)}
-                                className="hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer text-xs sm:text-sm line-clamp-1"
+                                className="hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer text-xs sm:text-sm line-clamp-1 text-slate-900 dark:text-neutral-100"
                                 title={prob.title}
                               >
                                 {prob.title}
@@ -1232,7 +1188,7 @@ export default function Practice() {
 
                             {/* Category */}
                             <td className="py-3 px-3 text-center">
-                              <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-neutral-900 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-800 font-medium truncate max-w-[120px]">
+                              <span className="inline-block text-[11px] px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 border border-slate-200 dark:border-neutral-800 font-medium truncate max-w-[120px]">
                                 {prob.module || "General"}
                               </span>
                             </td>

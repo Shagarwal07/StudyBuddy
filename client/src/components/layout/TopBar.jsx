@@ -184,7 +184,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
       }`}
     >
       {/* Hairline Crimson Accent Line */}
-      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[var(--crimson,#d63a3a)]/80 to-transparent" />
+      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[var(--crimson)]/80 to-transparent" />
 
       <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 gap-3">
         {/* Left: Branding & Context */}
@@ -198,7 +198,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
             <div className="flex items-baseline">
               <span
                 className={`text-lg sm:text-xl font-bold transition-colors ${
-                  isWeb ? "text-[var(--bone)]" : "text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-neutral-100"
+                  isWeb ? "text-theme-main text-[var(--bone)]" : "text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-neutral-100"
                 }`}
               >
                 Study
@@ -206,7 +206,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
               <span
                 className={`text-lg sm:text-xl font-black ${
                   isWeb
-                    ? "text-[var(--crimson-hover)]"
+                    ? "text-red-600 dark:text-red-400 text-[var(--crimson-hover)]"
                     : "bg-gradient-to-r from-[#FF4D4D] via-[#FF6E6E] to-[#FFA270] bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(255,77,77,0.35)]"
                 }`}
               >
@@ -223,7 +223,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
               aria-label="Go back"
               className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium cursor-pointer transition ${
                 isWeb
-                  ? "bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--bone)] hover:bg-[var(--surface-hover)]"
+                  ? "bg-[var(--surface-card)] border border-[var(--border-subtle)] text-theme-main text-[var(--bone)] hover:bg-[var(--surface-hover)]"
                   : "rounded-lg border border-slate-200 dark:border-neutral-800 bg-slate-100 dark:bg-neutral-900/80 text-slate-700 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-neutral-800"
               }`}
               style={{
@@ -240,7 +240,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
           {/* Breadcrumb / Page Title */}
           <div
             className={`hidden md:flex items-center gap-1.5 text-xs font-mono pl-1 ${
-              isWeb ? "text-[var(--bone-muted)]" : "text-slate-500 dark:text-neutral-400"
+              isWeb ? "text-theme-muted text-[var(--bone-muted)]" : "text-slate-500 dark:text-neutral-400"
             }`}
           >
             <span className="opacity-40">/</span>
@@ -254,7 +254,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
         <nav
           className={`hidden lg:flex items-center gap-1 p-1 ${
             isWeb
-              ? "bg-[var(--surface-card,#1a0b0f)] border border-[var(--border-subtle,rgba(241,232,218,0.18))]"
+              ? "bg-[var(--surface-card)] border border-[var(--border-subtle)]"
               : "bg-slate-100 dark:bg-[#15121F]/80 rounded-xl border border-slate-200 dark:border-neutral-800/70 shadow-xs dark:shadow-inner"
           }`}
           style={{
@@ -274,10 +274,10 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                   active
                     ? isWeb
-                      ? "bg-[var(--surface-hover,#26111a)] text-[var(--bone,#f1e8da)] border border-[var(--crimson,#d63a3a)] font-semibold"
+                      ? "bg-[var(--surface-hover)] text-theme-main text-[var(--bone)] border border-[var(--crimson)] font-semibold"
                       : "bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-semibold shadow-xs dark:shadow-[0_0_12px_rgba(224,77,77,0.2)]"
                     : isWeb
-                    ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]/50 border border-transparent"
+                    ? "text-theme-muted text-[var(--bone-muted)] hover:text-theme-main hover:bg-[var(--surface-hover)]/50 border border-transparent"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/50 border border-transparent"
                 } ${!isWeb ? "rounded-lg" : ""}`}
                 style={{
@@ -290,10 +290,10 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                   className={`w-3.5 h-3.5 ${
                     active
                       ? isWeb
-                        ? "text-[var(--crimson-hover,#e5484d)]"
+                        ? "text-red-500 text-[var(--crimson-hover)]"
                         : "text-red-500 dark:text-red-400"
                       : isWeb
-                      ? "text-[var(--bone-muted,#b9a29b)]"
+                      ? "text-theme-muted text-[var(--bone-muted)]"
                       : "text-slate-400 dark:text-neutral-500"
                   }`}
                 />
@@ -314,7 +314,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
             }
             className={`flex items-center gap-1.5 px-2.5 py-1 text-xs select-none transition group cursor-default ${
               isWeb
-                ? "bg-[var(--surface-card,#1a0b0f)] border border-[var(--crimson,#d63a3a)]/40 text-[var(--bone,#f1e8da)]"
+                ? "bg-[var(--surface-card)] border border-[var(--crimson)]/40 text-[var(--bone)]"
                 : displayStreak > 0
                 ? "bg-gradient-to-r from-orange-100 via-amber-50 to-red-100 dark:from-orange-500/15 dark:via-[#18111B] dark:to-red-500/15 border border-orange-300 dark:border-orange-500/35 hover:border-orange-400/60 shadow-xs dark:shadow-[0_0_12px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] rounded-full text-orange-700 dark:text-transparent"
                 : "bg-slate-100 dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:border-slate-300 dark:hover:border-neutral-700 rounded-full"
@@ -330,8 +330,8 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
               className={`font-mono text-xs ${
                 isWeb
                   ? displayStreak > 0
-                    ? "font-bold text-[var(--crimson-hover,#e5484d)]"
-                    : "font-medium text-[var(--bone-muted,#b9a29b)]"
+                    ? "font-bold text-[var(--crimson-hover)]"
+                    : "font-medium text-[var(--bone-muted)]"
                   : displayStreak > 0
                   ? "font-bold tracking-tight text-orange-700 dark:bg-gradient-to-r dark:from-amber-200 dark:via-orange-300 dark:to-amber-100 dark:bg-clip-text dark:text-transparent"
                   : "font-medium text-slate-500 dark:text-neutral-400"
@@ -349,7 +349,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                 onClick={() => setIsProfileMenuOpen((prev) => !prev)}
                 className={`flex items-center gap-2 pl-1 pr-2.5 py-1 transition-all duration-200 cursor-pointer select-none text-xs group ${
                   isWeb
-                    ? "bg-[var(--surface-card,#1a0b0f)] hover:bg-[var(--surface-hover,#26111a)] border border-[var(--border-strong,rgba(241,232,218,0.22))] text-[var(--bone,#f1e8da)]"
+                    ? "bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-strong)] text-[var(--bone)]"
                     : isProfileMenuOpen
                     ? "rounded-full bg-slate-200 dark:bg-neutral-800/90 border-slate-300 dark:border-neutral-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-red-500/30"
                     : "rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-neutral-900/80 dark:hover:bg-neutral-800/90 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-300 shadow-xs"
@@ -365,7 +365,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                 <div
                   className={`w-6 h-6 shrink-0 shadow-xs flex items-center justify-center p-[1px] ${
                     isWeb
-                      ? "bg-[var(--surface-hover,#26111a)] border border-[var(--crimson,#d63a3a)]"
+                      ? "bg-[var(--surface-hover)] border border-[var(--crimson)]"
                       : "rounded-full bg-gradient-to-br from-red-500 via-rose-500 to-amber-500"
                   }`}
                   style={{
@@ -386,7 +386,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     <div
                       className={`w-full h-full flex items-center justify-center font-bold text-[10px] ${
                         isWeb
-                          ? "bg-[var(--surface-card,#1a0b0f)] text-[var(--bone,#f1e8da)]"
+                          ? "bg-[var(--surface-card)] text-[var(--bone)]"
                           : "bg-slate-200 dark:bg-[#14111D] text-slate-800 dark:text-white rounded-full"
                       }`}
                     >
@@ -401,7 +401,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                   </span>
                   <ChevronDown
                     className={`w-3 h-3 transition-transform duration-200 ${
-                      isProfileMenuOpen ? "rotate-180 text-[var(--crimson-hover,#e5484d)]" : "opacity-60"
+                      isProfileMenuOpen ? "rotate-180 text-[var(--crimson-hover)]" : "opacity-60"
                     }`}
                   />
                 </div>
@@ -412,7 +412,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                 <div
                   className={`absolute right-0 mt-2 w-64 p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 ${
                     isWeb
-                      ? "bg-[var(--surface-card,#1a0b0f)] text-[var(--bone,#f1e8da)] border border-[var(--border-strong,rgba(241,232,218,0.22))]"
+                      ? "bg-[var(--surface-card)] text-[var(--bone)] border border-[var(--border-strong)]"
                       : "rounded-2xl border border-slate-200 dark:border-neutral-700/80 bg-white/98 dark:bg-[#121118]/95 text-slate-900 dark:text-neutral-100 backdrop-blur-xl"
                   }`}
                   style={{
@@ -426,7 +426,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     <div
                       className={`w-8 h-8 flex items-center justify-center font-bold text-xs shrink-0 ${
                         isWeb
-                          ? "bg-[var(--surface-hover,#26111a)] text-[var(--bone,#f1e8da)] border border-[var(--crimson,#d63a3a)]"
+                          ? "bg-[var(--surface-hover)] text-[var(--bone)] border border-[var(--crimson)]"
                           : "rounded-full bg-gradient-to-br from-red-500 to-amber-500 text-white"
                       }`}
                       style={{
@@ -449,7 +449,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                         {user?.email || ""}
                       </p>
                       {displayBadge && (
-                        <span className="inline-block mt-1 text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-red-50 text-red-600 border border-red-200 dark:bg-[var(--surface-hover,#26111a)] dark:text-[var(--crimson-hover,#e5484d)] dark:border-[var(--crimson,#d63a3a)]/40">
+                        <span className="inline-block mt-1 text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-red-50 text-red-600 border border-red-200 dark:bg-[var(--surface-hover)] dark:text-[var(--crimson-hover)] dark:border-[var(--crimson)]/40">
                           {displayBadge}
                         </span>
                       )}
@@ -459,7 +459,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                   <div
                     className={`h-[1px] my-1 ${
                       isWeb
-                        ? "bg-[var(--border-subtle,rgba(241,232,218,0.14))]"
+                        ? "bg-[var(--border-subtle)]"
                         : "bg-slate-200 dark:bg-neutral-800/80"
                     }`}
                   />
@@ -473,11 +473,11 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     }}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-left cursor-pointer transition ${
                       isWeb
-                        ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]"
+                        ? "text-[var(--bone-muted)] hover:text-[var(--bone)] hover:bg-[var(--surface-hover)]"
                         : "rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800/60"
                     }`}
                   >
-                    <Settings className="w-3.5 h-3.5 text-[var(--crimson-hover,#e5484d)]" />
+                    <Settings className="w-3.5 h-3.5 text-[var(--crimson-hover)]" />
                     <span className="text-xs font-medium">Settings & Profile</span>
                   </button>
 
@@ -489,7 +489,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 text-left cursor-pointer transition ${
                       isWeb
-                        ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]"
+                        ? "text-[var(--bone-muted)] hover:text-[var(--bone)] hover:bg-[var(--surface-hover)]"
                         : "rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800/60"
                     }`}
                   >
@@ -497,7 +497,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                       {isDark ? (
                         <Sun className="w-3.5 h-3.5 text-amber-400" />
                       ) : (
-                        <Moon className="w-3.5 h-3.5 text-[var(--crimson-hover,#e5484d)]" />
+                        <Moon className="w-3.5 h-3.5 text-[var(--crimson-hover)]" />
                       )}
                       <span className="text-xs font-medium">
                         {isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
@@ -506,7 +506,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     <span
                       className={`text-[10px] font-mono px-1.5 py-0.5 border ${
                         isWeb
-                          ? "bg-[var(--surface-hover,#26111a)] border-[var(--border-subtle,rgba(241,232,218,0.18))] text-[var(--bone,#f1e8da)]"
+                          ? "bg-[var(--surface-hover)] border-[var(--border-subtle)] text-[var(--bone)]"
                           : "rounded text-slate-600 bg-slate-100 border-slate-200 dark:text-neutral-400 dark:bg-neutral-900 dark:border-neutral-800"
                       }`}
                     >
@@ -522,7 +522,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 text-left cursor-pointer transition ${
                       isWeb
-                        ? "text-[var(--bone-muted,#b9a29b)] hover:text-[var(--bone,#f1e8da)] hover:bg-[var(--surface-hover,#26111a)]"
+                        ? "text-[var(--bone-muted)] hover:text-[var(--bone)] hover:bg-[var(--surface-hover)]"
                         : "rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800/60"
                     }`}
                   >
@@ -537,7 +537,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                     <span
                       className={`text-[10px] font-mono px-1.5 py-0.5 border ${
                         isWeb
-                          ? "bg-[var(--surface-hover,#26111a)] border-[var(--border-subtle,rgba(241,232,218,0.18))] text-[var(--bone,#f1e8da)]"
+                          ? "bg-[var(--surface-hover)] border-[var(--border-subtle)] text-[var(--bone)]"
                           : "rounded text-slate-600 bg-slate-100 border-slate-200 dark:text-neutral-400 dark:bg-neutral-900 dark:border-neutral-800"
                       }`}
                     >
@@ -548,7 +548,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
                   <div
                     className={`h-[1px] my-1 ${
                       isWeb
-                        ? "bg-[var(--border-subtle,rgba(241,232,218,0.14))]"
+                        ? "bg-[var(--border-subtle)]"
                         : "bg-slate-200 dark:bg-neutral-800/80"
                     }`}
                   />
@@ -574,7 +574,7 @@ export default function TopBar({ title, showBack = false, onMenuClick }) {
               onClick={() => navigate("/login")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
                 isWeb
-                  ? "bg-[var(--crimson-deep,#6e1d24)] hover:bg-[var(--crimson,#d63a3a)] text-[var(--on-crimson-deep,#f1e8da)] hover:text-[var(--on-accent,#ffffff)] border border-[var(--crimson,#d63a3a)]/30"
+                  ? "bg-[var(--crimson-deep)] hover:bg-[var(--crimson)] text-[var(--on-crimson-deep)] hover:text-[var(--on-accent)] border border-[var(--crimson)]/30"
                   : "text-white rounded-lg bg-gradient-to-r from-[#BA3C3C] to-[#E04D4D] hover:opacity-90 shadow-sm"
               }`}
               style={{
