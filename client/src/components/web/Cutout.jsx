@@ -43,13 +43,13 @@ export default function Cutout({
   return (
     <Component
       onClick={onClick}
-      className={`group relative p-[1px] transition-all duration-250 ease-out select-none ${
+      className={`group relative ${isCard ? "p-[1px]" : ""} transition-all duration-250 ease-out select-none ${
         hoverLift && isCard ? "hover:-translate-y-[2px]" : ""
       } ${className}`}
       style={{
         clipPath,
         WebkitClipPath: clipPath,
-        background: "var(--cutout-stroke)",
+        background: isCard ? "var(--cutout-stroke)" : "transparent",
         ...style,
       }}
       {...props}
@@ -69,12 +69,13 @@ export default function Cutout({
 
       {/* Inner fill layer inset 1px with same clip-path */}
       <div
-        className={`relative w-full h-full ${innerClassName}`}
+        className={`relative w-full h-full text-theme-main ${innerClassName}`}
         style={{
           clipPath,
           WebkitClipPath: clipPath,
           background: isCard ? "var(--cutout-inner-bg)" : undefined,
           boxShadow: isCard ? "var(--cutout-inner-shadow)" : undefined,
+          color: "var(--text-main)",
         }}
       >
         {children}

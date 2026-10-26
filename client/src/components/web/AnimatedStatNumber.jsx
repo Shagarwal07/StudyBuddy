@@ -77,7 +77,8 @@ export default function AnimatedStatNumber({ value, className = "" }) {
 
   return (
     <span
-      className={`font-mono text-[34px] sm:text-[36px] font-semibold tracking-tight text-[var(--bone)] leading-none ${className}`}
+      className={`font-mono text-[34px] sm:text-[36px] font-semibold tracking-tight text-theme-main leading-none ${className}`}
+      style={{ color: "var(--text-main)" }}
     >
       {displayVal}
     </span>
